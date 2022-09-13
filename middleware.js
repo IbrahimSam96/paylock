@@ -53,7 +53,7 @@ export default function middleware(req) {
     console.log("currentHost:", currentHost, "Hostname:", hostname)
 
     //   // rewrites for app pages
-    if (currentHost == "paylock") {
+    if (currentHost == "app") {
         // if (
         //     url.pathname === "/login" &&
         //     (req.cookies.get("next-auth.session-token") ||
