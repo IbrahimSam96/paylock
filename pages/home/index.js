@@ -14,6 +14,7 @@ const Index = () => {
             </Head>
 
             <ConnectButton />
+            <p>home</p>
         </div>
     )
 };
