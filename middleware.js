@@ -64,7 +64,7 @@ export default function middleware() {
     }
 
     // rewrite root application to `/home` folder
-    if (hostname === "localhost:3000" || hostname === "platformize.vercel.app") {
+    if (hostname === "localhost:3000" || hostname === "paylock.vercel.app") {
         url.pathname = `/home${url.pathname}`;
         return NextResponse.rewrite(url);
     }
