@@ -46,7 +46,7 @@ export default function middleware(req) {
         process.env.NODE_ENV === "production" && process.env.VERCEL === "1"
             ? hostname
                 .replace(`.vercel.app`, "")
-                .replace(`.platformize.vercel.app`, "")
+                .replace(`.paylock.vercel.app`, "")
             : hostname.replace(`.localhost:3000`, "");
     //   // rewrites for app pages
     if (currentHost == "app") {
