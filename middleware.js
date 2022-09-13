@@ -31,7 +31,7 @@ export default function middleware(req) {
     const url = req.nextUrl;
 
     // Get hostname of request (e.g. demo.vercel.pub, demo.localhost:3000)
-    const hostname = req.headers.get("host") || "paylock.vercel.app";
+    const hostname = req.headers.get("host") || "app.vercel.app";
 
     // Only for demo purposes - remove this if you want to use your root domain as the landing page
     //   if (hostname === "vercel.pub" || hostname === "platforms.vercel.app") {
