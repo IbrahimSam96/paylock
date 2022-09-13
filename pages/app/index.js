@@ -13,7 +13,9 @@ const Index = () => {
                 <link rel="icon" href="/favicon.ico" />
             </Head>
 
-            <ConnectButton />
+            <p>
+                Hello app.paylock.vercel.app
+            </p>
         </div>
     )
 };
