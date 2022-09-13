@@ -27,7 +27,7 @@ export const config = {
     ],
 };
 
-export default function middleware() {
+export default function middleware(req) {
     const url = req.nextUrl;
 
     // Get hostname of request (e.g. demo.vercel.pub, demo.localhost:3000)
