@@ -49,7 +49,7 @@ export default function middleware(req) {
                 .replace(`.vercel.app`, "")
                 .replace(`.paylock.vercel.app`, "")
             : hostname.replace(`.localhost:3000`, "");
-    console.log("processNode:", process.env.NODE_ENV, "processVERCEL:", process.env.VERCEL)
+
     console.log("currentHost:", currentHost, "Hostname:", hostname)
 
     //   // rewrites for app pages
@@ -70,6 +70,11 @@ export default function middleware(req) {
     // rewrite root application to `/home` folder
     if (hostname === "localhost:3000" || hostname === "paylock.vercel.app") {
         url.pathname = `/home${url.pathname}`;
+        return NextResponse.rewrite(url);
+    }
+
+    if (hostname === "app.paylock.vercel.app") {
+        url.pathname = `/app${url.pathname}`;
         return NextResponse.rewrite(url);
     }
 
