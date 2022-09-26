@@ -1,10 +1,12 @@
+// Local and Library css Imports 
 import '../styles/globals.css'
-
 import '@rainbow-me/rainbowkit/styles.css';
+import 'semantic-ui-css/semantic.min.css'
 
 import {
   getDefaultWallets,
   RainbowKitProvider,
+  darkTheme, midnightTheme, lightTheme
 } from '@rainbow-me/rainbowkit';
 import {
   chain,
@@ -17,7 +19,7 @@ import { publicProvider } from 'wagmi/providers/public';
 
 
 const { chains, provider } = configureChains(
-  [chain.mainnet, chain.polygon, chain.optimism, chain.arbitrum, chain.polygonMumbai],
+  [chain.mainnet, chain.polygon, chain.polygonMumbai],
   [
     alchemyProvider({ apiKey: process.env.ALCHEMY_ID }),
     publicProvider()
@@ -39,7 +41,7 @@ const wagmiClient = createClient({
 function MyApp({ Component, pageProps }) {
   return (
     <WagmiConfig client={wagmiClient}>
-      <RainbowKitProvider showRecentTransactions={true} chains={chains}>
+      <RainbowKitProvider showRecentTransactions={true} chains={chains} initialChain={chain.mainnet}>
         <Component {...pageProps} />
       </RainbowKitProvider>
     </WagmiConfig>

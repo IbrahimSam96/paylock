@@ -1,3 +1,83 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Bacground Patterns */
+.DiagonalV1 {
+  background-color: #e5e5f7;
+  opacity: 0.8;
+  background: repeating-linear-gradient(
+    45deg,
+    #131341,
+    #131341 5px,
+    #e5e5f7 5px,
+    #e5e5f7 25px
+  );
+}
+
+.DiagonalV2 {
+  background-color: #100d23;
+  opacity: 1;
+  background: repeating-linear-gradient(
+    45deg,
+    #4ca4e3,
+    #4ca4e3 5px,
+    #100d23 5px,
+    #100d23 25px
+  );
+}
+
+.Polka {
+  background-color: #100d23;
+  opacity: 1;
+  background-image: radial-gradient(#4ca4e3 0.5px, #100d23 0.5px);
+  background-size: 10px 10px;
+}
+
+.PolkaV2 {
+  background-color: #100d23;
+  opacity: 1;
+  background-image: radial-gradient(#2222ff 0.5px, #100d23 0.5px);
+  background-size: 10px 10px;
+}
+
+.Cross {
+  background-color: #100d23;
+  opacity: 1;
+  background: radial-gradient(
+      circle,
+      transparent 20%,
+      #100d23 20%,
+      #100d23 80%,
+      transparent 80%,
+      transparent
+    ),
+    radial-gradient(
+        circle,
+        transparent 20%,
+        #100d23 20%,
+        #100d23 80%,
+        transparent 80%,
+        transparent
+      )
+      25px 25px,
+    linear-gradient(#4ca4e3 2px, transparent 2px) 0 -1px,
+    linear-gradient(90deg, #4ca4e3 2px, #100d23 2px) -1px 0;
+  background-size: 50px 50px, 50px 50px, 25px 25px, 25px 25px;
+}
+
+/* Shine */
+.shineEffect {
+  -webkit-mask-image: linear-gradient(
+    60deg,
+    black 25%,
+    rgba(0, 0, 0, 0.2) 50%,
+    black 75%
+  );
+  -webkit-mask-size: 400%;
+  -webkit-mask-position: 0%;
+}
+.shineEffect:hover {
+  -webkit-mask-position: 100%;
+  transition: mask-position 1s ease, -webkit-mask-position 1s ease;
+}
