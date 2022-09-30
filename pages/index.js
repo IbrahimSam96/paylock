@@ -27,6 +27,24 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 //  Light pink #c24bbe
 
 const Index = () => {
+  // Theme Switch
+  const [toggle, setToogle] = useState(true);
+  useEffect(() => {
+
+    if ((localStorage.getItem('theme') === 'dark')) {
+      console.log("It's dark..");
+      document.documentElement.classList.add('dark');
+      setToogle(false);
+    }
+    else if ((localStorage.getItem('theme') === 'light')) {
+      console.log("It's light..");
+      document.documentElement.classList.remove('dark');
+      setToogle(true);
+    }
+    else if ((localStorage.getItem('theme') == undefined)) {
+      console.log("No theme set.. making it dark");
+    }
+  }, [])
   // Checking for window object to avoid errors using wagmi hooks .
   const [isSSR, setIsSSR] = useState(true);
   // Avatar config at config.current;
@@ -114,7 +132,7 @@ const Index = () => {
 
   return (
 
-    <div className={`h-full min-h-screen w-full grid grid-cols-[repeat(7,1fr)] grid-rows-[100px,25px,auto,100px] ${!isSSR && connection.chain?.name == "Ethereum" && `bg-[#383843]	`} bg-[#131341]`}>
+    <div className={` h-full min-h-screen w-full grid grid-cols-[repeat(7,1fr)] grid-rows-[100px,25px,auto,100px] ${!isSSR && connection.chain?.name == "Ethereum" && `bg-[#383843]`} bg-[#131341]`}>
       <Head>
         <title>Paylock</title>
         <meta name="Send crypto like web2" content="Send crpto " />
@@ -122,6 +140,7 @@ const Index = () => {
       </Head>
 
       <span className={`col-start-1 col-end-8 mx-4 grid  `}>
+        {/* Logo & Navigation */}
         <span className={`flex`} >
           <Image
             width={30}
@@ -134,14 +153,14 @@ const Index = () => {
             }}
           />
 
-          <span className="group ml-auto my-auto text-sm mt-5 ">
+          <span className="group ml-auto my-auto text-sm mt-4 ">
             <p className='cursor-pointer font-extralight group-hover:text-[#149adc] text-[white] text-sm' >Send
               <svg className={`inline`} width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path className={`group-hover:fill-[#149adc]`} d="M12 15L12.3536 15.3536L12 15.7071L11.6464 15.3536L12 15ZM18.3536 9.35355L12.3536 15.3536L11.6464 14.6464L17.6464 8.64645L18.3536 9.35355ZM11.6464 15.3536L5.64645 9.35355L6.35355 8.64645L12.3536 14.6464L11.6464 15.3536Z" fill="white" />
               </svg>
             </p>
-            <span className={`hidden z-50 group-hover:block p-4  bg-[white] absolute rounded-xl border-t-2 border-[#149adc] `}>
-              <p className={`cursor-pointer text-[black] text-left hover:text-[#149adc]`}>
+            <span className={`hidden z-50 group-hover:block p-4  bg-[aliceblue] dark:bg-[#100d23] absolute rounded-xl border-t-2 border-[#149adc] `}>
+              <p className={`cursor-pointer text-[black] text-left dark:text-[#149adc] hover:text-[#149adc]`}>
                 Single Payment
               </p>
             </span>
@@ -153,10 +172,44 @@ const Index = () => {
           </span>
 
         </span>
-
         <span className={` flex self-center justify-self-end`}>
+          {/* Connect Button */}
           <span className={`self-center`}>
             <ConnectButton />
+          </span>
+          {/* ThemeSwitch */}
+          <span className={`m-2`}>
+            <label
+              className="container"
+            // title={"Activate dark mode"}
+            // aria-label={"Activate dark mode"}
+            >
+              <input
+                type="checkbox"
+                checked={toggle}
+                onChange={() => {
+                  if ((localStorage.getItem('theme') === 'dark')) {
+                    console.log("It's dark.. switiching to light")
+                    localStorage.setItem('theme', 'light');
+                    document.documentElement.classList.remove('dark')
+                    setToogle(true);
+                  }
+                  else if ((localStorage.getItem('theme') === 'light')) {
+                    console.log("It's light.. switiching to dark")
+                    localStorage.setItem('theme', 'dark')
+                    document.documentElement.classList.add('dark')
+                    setToogle(false);
+                  }
+                  else if ((localStorage.getItem('theme') == undefined)) {
+                    console.log("No theme set.. making it dark")
+                    localStorage.setItem('theme', 'dark')
+                    document.documentElement.classList.add('dark');
+                    setToogle(false)
+                  }
+                }}
+              />
+              <div />
+            </label>
           </span>
 
         </span>
@@ -164,7 +217,10 @@ const Index = () => {
 
       {!isSSR &&
         <React.Fragment>
-          <span className={` self-center justify-self-auto sm:justify-self-center xl:justify-self-auto xl:col-start-3 xl:col-end-6 xl:max-w-[500px]   col-start-1 col-end-8 row-start-3 row-end-4 sm:mx-4 p-4  grid grid-rows-[40px,min-content,30px,30px,40px,30px,30px,min-content,50px] grid-cols-1 border-black border-[2px] bg-[#100d23] rounded-2xl mx-4   `}>
+          <span className={` self-center justify-self-auto sm:justify-self-center xl:justify-self-auto xl:col-start-3 xl:col-end-6 xl:max-w-[500px] 
+          col-start-1 col-end-8 row-start-3 row-end-4 sm:mx-4 p-4 mx-4
+           grid grid-rows-[40px,min-content,30px,30px,40px,30px,30px,min-content,50px] grid-cols-1
+            border-black border-[2px] bg-[aliceblue] dark:bg-[#100d23] rounded-2xl  `}>
 
             <span className={`grid grid-col-1 grid-rows-1 p-3`} >
 
@@ -237,7 +293,7 @@ const Index = () => {
 
 
               <span className={`flex ml-4  `}>
-                {token &&
+                {!isDisconnected && token &&
                   <>
                     <span className={`text-[#20cc9e] text-xs sm:text-sm self-center `}>Balance:  </span>
                     {token && token?.value == connection.chain?.nativeCurrency.symbol &&
@@ -292,23 +348,24 @@ const Index = () => {
 
 
             <Accordion
+              className={`dark:bg-[#100d23]`}
               sx={{ borderRadius: "10px", marginTop: "15px" }}
               disableGutters={true}
               disabled={isDisconnected || !addressReciever || !token}
             >
               <AccordionSummary
                 className={`border-black border-[2px]`}
-                expandIcon={<ExpandMoreIcon />}
+                expandIcon={<ExpandMoreIcon className={`dark:text-[#20cc9e]`} />}
                 aria-controls="panel1a-content"
                 id="panel1a-header"
               >
                 <span className={`font-bold text-xs text-[#20cc9e]`}
                 >Payment Details</span>
               </AccordionSummary>
-              <AccordionDetails>
-                <div className={` border-[1px]  border-[#1e1d45] rounded `}>
+              <AccordionDetails className={`dark:bg-[#1e1d45]`}>
+                <div className={`  rounded `}>
                   <span className={`flex  `}>
-                    <span className={`font-bold text-xs  text-[#372963] self-center m-2`}
+                    <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center m-2`}
                     >Sending:
                     </span>
                     <span className={`flex border-[1px] cursor-pointer border-[#372963] rounded  `}>
@@ -324,15 +381,15 @@ const Index = () => {
                     </span>
                   </span>
                   <span className={`flex`}>
-                    <span className={`font-bold text-xs text-[#372963] self-center block m-2`}>
+                    <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center block m-2`}>
                       Amount:
                     </span>
-                    <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2`}>
+                    <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2 `}>
                       {sendAmount.formattedValue}
                     </span>
                   </span>
                   <span className={`flex`}>
-                    <span className={`font-bold text-xs text-[#372963] self-center block m-2`}>
+                    <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center block m-2`}>
                       Network:
                     </span>
                     <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2`}>
@@ -340,7 +397,7 @@ const Index = () => {
                     </span>
                   </span>
                   <span className={`flex`}>
-                    <span className={`font-bold text-xs text-[#372963] self-center block m-2`}>
+                    <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center block m-2`}>
                       Method:
                     </span>
                     <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2`}>
