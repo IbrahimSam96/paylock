@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "C:\\Users\\IbrahimSamara\\Desktop\\paylock\\contracts\\PayFactory.sol": {
-      "lastModificationDate": 1662927612032,
-      "contentHash": "f7428ab5cc37d23b09f2419e173d4503",
+      "lastModificationDate": 1664563613131,
+      "contentHash": "ac80c65c4a9301a2b0878e84fc111d42",
       "sourceName": "contracts/PayFactory.sol",
       "solcConfig": {
         "version": "0.8.4",

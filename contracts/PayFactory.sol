@@ -47,9 +47,9 @@ contract PayLock is Ownable, ERC721 {
     mapping(address => payment[]) public s_issuedPayments;
     mapping(address => payment[]) public s_redeemablePayments;
     // Events
-    event PaymentIssued(address indexed sender, payment indexed payment);
-    event PaymentReedemed(address indexed receiver, payment indexed payment);
-    event PaymentWithdrawn(address indexed sender, payment indexed payment);
+    event PaymentIssued(address indexed sender, payment indexed receipt);
+    event PaymentReedemed(address indexed receiver, payment indexed receipt);
+    event PaymentWithdrawn(address indexed sender, payment indexed receipt);
 
     /**
      * @dev Issue a payment.
