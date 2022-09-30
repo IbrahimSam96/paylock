@@ -18,7 +18,7 @@ contract PayLock is Ownable, ERC721 {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIdCounter;
 
-    // Initializes openzeppelin ERC721.sol for minting NFT'S to grant USERS  VIP access and avoid fees.
+    // Initializes openzeppelin's ERC721.sol to mint NFT'S TO USERS for premium access.
     constructor() ERC721("PayLock", "LOCK") {}
 
     // Enums
@@ -37,7 +37,7 @@ contract PayLock is Ownable, ERC721 {
         uint256 code;
         PaymentState state;
     }
-    // Deployer Withdrawable Fee Collection*
+    // Protocol Fee Collection Balance
     struct PaySafe {
         uint256 balance;
     }
@@ -47,17 +47,17 @@ contract PayLock is Ownable, ERC721 {
     mapping(address => payment[]) public s_issuedPayments;
     mapping(address => payment[]) public s_redeemablePayments;
     // Events
-    event PaymentIssued(address indexed sender, uint256 indexed value);
-    event PaymentReedemed(address indexed receiver, uint256 indexed value);
-    event PaymentWithdrawn(address indexed sender, uint256 indexed issuerIndex);
+    event PaymentIssued(address indexed sender, payment indexed payment);
+    event PaymentReedemed(address indexed receiver, payment indexed payment);
+    event PaymentWithdrawn(address indexed sender, payment indexed payment);
 
     /**
      * @dev Issue a payment.
      * `_receiver` Is a parameter supplied by the frontend to the issuer of transaction`.
-     * `_code` Is a parameter supplied by the frontend to the issuer of transaction`.
+     * `_code` IS A UID generated when transaction is created by issuer`.
      *
      * Requirements:
-     * - `msg.value` Payment needs to have a value and connot be empty.
+     * - `msg.value` Payment needs to have value i,e not empty.
      *
      * Emits a {PaymentWithdrawn} event.
      */
@@ -88,11 +88,11 @@ contract PayLock is Ownable, ERC721 {
         newPayment.receiverId = s_redeemablePayments[_receiver].length;
         newPayment.code = _code;
         newPayment.state = PaymentState.ACTIVE;
-        // ADD payment to boths arrays of issuer and reedemable transactions
+        // ADD payment to both arrays of issuer and reedemable transactions
         s_issuedPayments[msg.sender].push(newPayment);
         s_redeemablePayments[_receiver].push(newPayment);
         // Emit PaymentIssued event
-        emit PaymentIssued(msg.sender, newPayment.value);
+        emit PaymentIssued(msg.sender, newPayment);
     }
 
     /**
@@ -100,27 +100,27 @@ contract PayLock is Ownable, ERC721 {
      * `_index` Is a parameter supplied by the frontend to the issuer of transaction`.
      *
      * Requirements:
-     * - `notActive` Payment needs to be active i.e Not withdrawn or Received.
-     * - `notReceiver` cannot be diffrent address than recepient.
+     * - `Active` Payment needs to be active i.e Not withdrawn or Received.
+     * - `notReceiver` Only issuer address wil be able to withdraw.
      *
      * Emits a {PaymentWithdrawn} event.
      */
     function withdrawIssuerPayment(uint256 index) public payable {
-        // get memory payment struct in issuer mapping
+        // Lookup issued payment in issuer's issued transactions
         payment memory issuedPayment = s_issuedPayments[msg.sender][index];
-
+        // Payment must be active and sender must be the payment issuer.
         bool notActive = issuedPayment.state != PaymentState.ACTIVE;
         bool notSender = issuedPayment.issuer != msg.sender;
         bool conditions = (notActive || notSender);
         if (conditions) {
             revert __NotSenderOrNotActive();
         }
-        //Change state to Withdrawn.
-        s_issuedPayments[msg.sender][index].state = PaymentState.WITHDRAWN;
+        //Change payment state to Withdrawn.
         s_redeemablePayments[issuedPayment.receiver][issuedPayment.receiverId]
             .state = PaymentState.WITHDRAWN;
+        s_issuedPayments[msg.sender][index].state = PaymentState.WITHDRAWN;
         // Emit PaymentWithdrawn event
-        emit PaymentWithdrawn(msg.sender, index);
+        emit PaymentWithdrawn(msg.sender, issuedPayment);
         (bool success, ) = msg.sender.call{value: issuedPayment.value}("");
         if (!success) {
             revert __TransferFailed();
@@ -129,11 +129,11 @@ contract PayLock is Ownable, ERC721 {
 
     /**
      * @dev Redeem _code to receive Payment.
-     * `_code` IS A UID supplied by the frontend to the issuer of transaction`.
+     * `_code` A UID generzted  by the issuer of transaction`.
      *
      * Requirements:
-     * - `notActive` Payment needs to be active i.e Not withdrawn or Received.
-     * - `notReceiver` cannot be diffrent address than recepient.
+     * - `Active` Payment needs to be active i.e Not withdrawn or Received.
+     * - `notReceiver` sender must be recepient address in payment.
      *
      * Emits a {PaymentReedemed} event.
      */
@@ -161,7 +161,7 @@ contract PayLock is Ownable, ERC721 {
                 ].state = PaymentState.RECEIVED;
                 s_redeemablePayments[msg.sender][i].state = PaymentState
                     .RECEIVED;
-                emit PaymentReedemed(msg.sender, reedemablePayments[i].value);
+                emit PaymentReedemed(msg.sender, reedemablePayments[i]);
 
                 (bool success, ) = msg.sender.call{
                     value: reedemablePayments[i].value
