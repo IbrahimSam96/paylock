@@ -17,15 +17,6 @@ import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-// Import Swiper React components
-import { Swiper, SwiperSlide } from "swiper/react";
-// import required modules
-import { EffectCube, Pagination } from "swiper";
-// Import Swiper styles
-import "swiper/css";
-import "swiper/css/effect-cube";
-import "swiper/css/pagination";
-
 
 // Background #131341
 // Component #100d23
