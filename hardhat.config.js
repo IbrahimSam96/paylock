@@ -10,16 +10,17 @@ module.exports = {
         hardhat: {
             chainId: 1337
         },
-        Mumbai: {
+        polygonMumbai: {
             url: 'https://polygon-mumbai.g.alchemy.com/v2/tSpg5zjh4lrrDfRaY1FA5p1Y-h_5vRuu',
-            accounts: [process.env.NEXT_PUBLIC_privateKey]
+            accounts: [process.env.NEXT_PUBLIC_privateKey],
+            chainId: 80001
         },
     },
     etherscan: {
         apiKey: process.env.NEXT_PUBLIC_POLYGONSCAN_API_KEY,
     },
     solidity: {
-        version: "0.8.4",
+        version: "0.8.9",
         settings: {
             optimizer: {
                 enabled: true,

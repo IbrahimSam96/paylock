@@ -29,8 +29,8 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 const Index = () => {
   // Theme Switch
   const [toggle, setToogle] = useState(true);
-  useEffect(() => {
 
+  useEffect(() => {
     if ((localStorage.getItem('theme') === 'dark')) {
       console.log("It's dark..");
       document.documentElement.classList.add('dark');
