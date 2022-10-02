@@ -6,6 +6,9 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
+import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
+import "@openzeppelin/contracts/metatx/MinimalForwarder.sol";
+
 error Ammount__Empty();
 error __NotSenderOrNotActive();
 error __NoReedemablePayments();
@@ -13,13 +16,16 @@ error __InvalidCode();
 error __TransferFailed();
 error __TransferWithdrawn();
 
-contract PayLock is Ownable, ERC721 {
+contract PayLock is ERC2771Context, Ownable, ERC721 {
     // Incrementer for tokenId
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIdCounter;
 
     // Initializes openzeppelin's ERC721.sol to mint NFT'S TO USERS for premium access.
-    constructor() ERC721("PayLock", "LOCK") {}
+    constructor(MinimalForwarder forwarder)
+        ERC721("PayLock", "LOCK")
+        ERC2771Context(address(forwarder))
+    {}
 
     // Enums
     enum PaymentState {
@@ -82,7 +88,7 @@ contract PayLock is Ownable, ERC721 {
             s_PaySafe.balance += msg.value / 200;
         }
         // Issue payment
-        newPayment.issuer = payable(msg.sender);
+        newPayment.issuer = payable(_msgSender());
         newPayment.receiver = payable(_receiver);
         newPayment.issuerId = s_issuedPayments[msg.sender].length;
         newPayment.receiverId = s_redeemablePayments[_receiver].length;
@@ -194,5 +200,24 @@ contract PayLock is Ownable, ERC721 {
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(msg.sender, tokenId);
+    }
+
+    // Overiders for ERC2711Context
+    function _msgSender()
+        internal
+        view
+        override(Context, ERC2771Context)
+        returns (address sender)
+    {
+        sender = ERC2771Context._msgSender();
+    }
+
+    function _msgData()
+        internal
+        view
+        override(Context, ERC2771Context)
+        returns (bytes calldata)
+    {
+        return ERC2771Context._msgData();
     }
 }
