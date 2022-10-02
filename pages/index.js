@@ -441,9 +441,7 @@ const Index = () => {
             }
           </span>
         </React.Fragment>
-
       }
-
 
     </div >
   )
