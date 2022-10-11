@@ -3,12 +3,11 @@ import Head from 'next/head'
 import {
   ConnectButton
 } from '@rainbow-me/rainbowkit';
-import { useConnect, useNetwork, useBalance, useAccount, chain } from 'wagmi';
+import { useConnect, useNetwork, useBalance, useAccount, useSignTypedData, useSignMessage, useSigner, useContract, chain } from 'wagmi';
 import { ethers, providers } from 'ethers';
-
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import Image from 'next/image';
-
+import axios from 'axios'
 import { NumericFormat } from 'react-number-format';
 import Avatar, { genConfig } from 'react-nice-avatar'
 import Select from 'react-select'
@@ -17,6 +16,9 @@ import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
+
+import { contractAddress } from '../config';
+import PayFactory from '../artifacts/contracts/PayFactory.sol/PayLock.json'
 
 // Background #131341
 // Component #100d23
@@ -58,8 +60,26 @@ const Index = () => {
     formattedValue: "",
     value: ""
   });
+  const [USDValue, setUSDValue] = useState(undefined);
 
-  // wagmi hooks
+
+  const { data: signer } = useSigner();
+
+  const { data, isError, isLoading, isSuccess, signMessage } = useSignMessage({
+    onSuccess: async (sign, msg) => {
+      let recovered = await ethers.utils.verifyMessage(msg.message, sign);
+      if (recovered == address) {
+        console.log('Calling Relayer')
+      }
+
+      // fetch('/api/hello')
+      //   .then((res) => res.json())
+      //   .then((data) => {
+      //     console.log(data)
+
+      //   })
+    }
+  })
   const { address, isConnecting, isDisconnected } = useAccount();
   const connection = useNetwork();
   const nativeBalance = useBalance({
@@ -122,12 +142,97 @@ const Index = () => {
     setIsSSR(false);
   }, []);
 
-  // Refresh token value when connection changes
+  // Refresh token value when connection chain changes
   useEffect(() => {
     if (tokenOptions) {
       setToken(tokenOptions[0])
     }
   }, [connection.chain, tokenOptions]);
+
+  // gets token price from coingeko API
+  useEffect(() => {
+    if (token) {
+
+      if (token.value == 'MATIC') {
+
+        let network = "matic-network";
+
+        axios.get(`https://api.coingecko.com/api/v3/simple/price?ids=${network}&vs_currencies=usd`).then((res) => {
+          setUSDValue(res.data[`${network}`].usd)
+        })
+      }
+      else if (token.value == 'ETH') {
+        let network = "ethereum";
+        axios.get(`https://api.coingecko.com/api/v3/simple/price?ids=${network}&vs_currencies=usd`).then((res) => {
+          setUSDValue(res.data[`${network}`].usd)
+        })
+      }
+      else {
+        let network = "ethereum"
+        let tokenAddress = '';
+        switch (token.value) {
+          case 'DAI':
+            tokenAddress = "0x6B175474E89094C44Da98b954EedeAC495271d0F".toLocaleLowerCase()
+            break;
+          case 'USDT':
+            tokenAddress = '0xdAC17F958D2ee523a2206206994597C13D831ec7'.toLocaleLowerCase()
+            break;
+          case 'USDC':
+            tokenAddress = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'.toLocaleLowerCase()
+            break;
+          case 'WBTC':
+            tokenAddress = '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599'.toLocaleLowerCase()
+            break;
+          default:
+            // code block
+            console.log('token not detected')
+        }
+
+        axios.get(`https://api.coingecko.com/api/v3/simple/token_price/${network}?contract_addresses=${tokenAddress}&vs_currencies=usd`).then((res) => {
+          if (res.data) {
+            setUSDValue(res.data[`${tokenAddress}`].usd)
+          }
+        })
+      }
+    }
+
+
+  }, [token, connection.chain])
+
+  const withdrawTx = async () => {
+    var message = `Sending ${addressReciever} :  ${sendAmount.formattedValue}`
+    let messageHash = ethers.utils.id(message);
+    let messageHashBytes = ethers.utils.arrayify(messageHash)
+
+    signMessage({ message: message });
+  }
+
+  const createtx = async () => {
+
+    let contract = new ethers.Contract(contractAddress, PayFactory.abi, signer);
+    let value = ethers.utils.parseEther(sendAmount.value);
+
+    // Estimate fee, NOTE: ERRORS on Mumbai but works on eth mainnet
+    // var gasfee = (await signer.getFeeData()).gasPrice._hex
+    // var contractFee = await contract.estimateGas.CreatePayement(addressReciever, '1141')
+    // var estimatedGas = ethers.utils.formatUnits(Number(gasfee) * Number(contractFee._hex), "ether")
+    // console.log("estimatedGas:", estimatedGas)
+
+    let transaction = await contract.CreatePayement(addressReciever, '1141', {
+      value: value,
+      gasLimit: 21000,
+    }
+    );
+
+    await transaction.wait().then((res) => {
+      // toast.update(toastId.current, { type: toast.TYPE.SUCCESS, autoClose: 5000, render: "Transaction Successful" });
+    })
+      .catch((err) => {
+        // toast.update(toastId.current, { type: toast.TYPE.ERROR, autoClose: 5000, render: "Transaction Failed" });
+        console.log(err)
+      })
+
+  }
 
   return (
 
@@ -216,7 +321,7 @@ const Index = () => {
 
       {!isSSR &&
         <React.Fragment>
-          <span className={` self-center justify-self-auto sm:justify-self-center xl:justify-self-auto xl:col-start-3 xl:col-end-6 xl:max-w-[500px] 
+          <span className={` self-start justify-self-auto sm:justify-self-center 
           col-start-1 col-end-8 row-start-3 row-end-4 sm:mx-4 p-4 mx-4
            grid grid-rows-[40px,min-content,30px,30px,40px,30px,30px,min-content,50px] grid-cols-1
             border-black border-[2px] bg-[aliceblue] dark:bg-[#100d23] rounded-2xl  `}>
@@ -269,7 +374,6 @@ const Index = () => {
               isDisabled={isDisconnected}
               className={`self-center ${isDisconnected && `opacity-50`}  `}
               onChange={(change) => {
-                console.log(change)
                 setToken(change);
               }}
 
@@ -290,7 +394,6 @@ const Index = () => {
             <span className={`flex`} >
               <span className={`text-[#20cc9e] text-xs sm:text-sm self-center `}>Select token  </span>
 
-
               <span className={`flex ml-4  `}>
                 {!isDisconnected && token &&
                   <>
@@ -298,12 +401,12 @@ const Index = () => {
                     {token && token?.value == connection.chain?.nativeCurrency.symbol &&
                       <>
                         <span className={`text-[#149adc] text-xs sm:text-sm self-center ml-2 `}>
-                          {Number(nativeBalance.data?.formatted).toFixed(4)}  {token.value}
+                          {Number(nativeBalance.data?.formatted).toPrecision(5)}  {token.value}
                         </span>
-                        {sendAmount.value != Number(nativeBalance.data?.formatted).toFixed(4) && Number(nativeBalance.data?.formatted) > 0 &&
+                        {sendAmount.value != Number(nativeBalance.data?.formatted).toPrecision(5) &&
                           <span className={`text-[#20cc9e] text-xs sm:text-sm self-center ml-4 rounded-xl px-2 bg-[#1e1d45] hover:opacity-90  cursor-pointer `}
                             onClick={() => {
-                              setSendAmount((PreviousAmount) => ({ ...PreviousAmount, value: Number(nativeBalance.data?.formatted).toFixed(4) }))
+                              setSendAmount((PreviousAmount) => ({ ...PreviousAmount, value: Number(nativeBalance.data?.formatted).toPrecision(5) }))
                             }}
                           > max </span>
                         }
@@ -313,12 +416,12 @@ const Index = () => {
                     {token && token?.value != connection.chain?.nativeCurrency.symbol &&
                       <>
                         <span className={`text-[#149adc] text-text-xs sm:text-sm self-center ml-2 `}>
-                          {Number(tokenBalance.data?.formatted).toFixed(4)} {token.value}
+                          {Number(tokenBalance.data?.formatted).toPrecision(5)} {token.value}
                         </span>
-                        {sendAmount.value != Number(tokenBalance.data?.formatted).toFixed(4) &&
+                        {sendAmount.value != Number(tokenBalance.data?.formatted).toPrecision(5) &&
                           <span className={`text-[#20cc9e] text-xs sm:text-sm self-center ml-4 rounded-xl px-2 bg-[#1e1d45] hover:opacity-90  cursor-pointer `}
                             onClick={() => {
-                              setSendAmount((PreviousAmount) => ({ ...PreviousAmount, value: Number(tokenBalance.data?.formatted).toFixed(4) }))
+                              setSendAmount((PreviousAmount) => ({ ...PreviousAmount, value: Number(tokenBalance.data?.formatted).toPrecision(5) }))
                             }}
                           > max </span>
                         }
@@ -339,7 +442,6 @@ const Index = () => {
               thousandSeparator
               suffix={token?.value}
               onValueChange={(values) => {
-                console.log(values);
                 setSendAmount(values);
               }}
             />
@@ -379,12 +481,29 @@ const Index = () => {
                       />
                     </span>
                   </span>
+
                   <span className={`flex`}>
                     <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center block m-2`}>
-                      Amount:
+                      Fee:
                     </span>
                     <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2 `}>
-                      {sendAmount.formattedValue}
+                      {sendAmount.floatValue != 0 && sendAmount.floatValue && (Number(sendAmount.value) * 0.005).toPrecision(5)} {sendAmount.floatValue != 0 && sendAmount.floatValue && token.value}
+                    </span>
+                    <span className={`font-extralight text-xs text-[#149adc] self-center  `}>
+                      {sendAmount.floatValue != 0 && sendAmount.floatValue && "( $" + Intl.NumberFormat('en-US').format((Number(sendAmount.value) * 0.005) * USDValue) + ` USD)`}
+                    </span>
+
+
+                  </span>
+                  <span className={`flex`}>
+                    <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center block m-2`}>
+                      Receiving:
+                    </span>
+                    <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2 `}>
+                      {sendAmount.floatValue != 0 && sendAmount.floatValue && (Number(sendAmount.value) - (Number(sendAmount.value) * 0.005)).toPrecision(5)} {sendAmount.floatValue != 0 && sendAmount.floatValue && token.value}
+                    </span>
+                    <span className={`font-extralight text-xs text-[#149adc] self-center block `}>
+                      {sendAmount.floatValue != 0 && sendAmount.floatValue && "( $" + Intl.NumberFormat('en-US').format(((Number(sendAmount.value) - (Number(sendAmount.value) * 0.005)) * USDValue).toFixed(2)) + ' USD)'}
                     </span>
                   </span>
                   <span className={`flex`}>
@@ -400,7 +519,7 @@ const Index = () => {
                       Method:
                     </span>
                     <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2`}>
-                      Single Payment
+                      Single Payment (Withdrawable)
                     </span>
                   </span>
                 </div>
@@ -425,17 +544,19 @@ const Index = () => {
               < button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled >Enter Amount</button>
             }
 
-            {!isDisconnected && addressReciever != '' && token && token.value != connection.chain?.nativeCurrency.symbol && Number(sendAmount.value) > Number(tokenBalance.data?.value) &&
+            {!isDisconnected && addressReciever != '' && token && token.value != connection.chain?.nativeCurrency.symbol && Number(sendAmount.value) > Number(tokenBalance.data?.formatted) &&
               < button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled >{`Insufficient ${token.value}`} </button>
             }
-            {!isDisconnected && addressReciever != '' && token && token.value == connection.chain?.nativeCurrency.symbol && Number(sendAmount.value) > Number(nativeBalance.data?.value) &&
+            {!isDisconnected && addressReciever != '' && token && token.value == connection.chain?.nativeCurrency.symbol && Number(sendAmount.value) > Number(nativeBalance.data.formatted) &&
               < button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled > {`Insufficient ${token.value}`}</button>
             }
 
             {!isDisconnected && addressReciever != '' && token && token.value == connection.chain?.nativeCurrency.symbol && Number(nativeBalance.data?.value) != 0 &&
-              sendAmount.floatValue != undefined && sendAmount.floatValue != 0 && Number(sendAmount.value) <= Number(nativeBalance.data?.value) &&
+              sendAmount.floatValue != undefined && sendAmount.floatValue != 0 && Number(sendAmount.value) <= Number(nativeBalance.data.formatted) &&
 
-              <button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm `}>
+              <button onClick={() => {
+                createtx();
+              }} className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm `}>
                 Send
               </button>
             }
