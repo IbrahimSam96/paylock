@@ -85,10 +85,11 @@ contract PayLock is ERC2771Context, Ownable, ERC721 {
         //IF user has no LOCK token, value - 0.5% transaction fees = 0.5%
         if (balanceOf(msg.sender) == 0) {
             newPayment.value = msg.value - msg.value / 200;
+
             s_PaySafe.balance += msg.value / 200;
         }
         // Issue payment
-        newPayment.issuer = payable(_msgSender());
+        newPayment.issuer = payable(msg.sender);
         newPayment.receiver = payable(_receiver);
         newPayment.issuerId = s_issuedPayments[msg.sender].length;
         newPayment.receiverId = s_redeemablePayments[_receiver].length;
@@ -113,10 +114,10 @@ contract PayLock is ERC2771Context, Ownable, ERC721 {
      */
     function withdrawIssuerPayment(uint256 index) public payable {
         // Lookup issued payment in issuer's issued transactions
-        payment memory issuedPayment = s_issuedPayments[msg.sender][index];
+        payment memory issuedPayment = s_issuedPayments[_msgSender()][index];
         // Payment must be active and sender must be the payment issuer.
         bool notActive = issuedPayment.state != PaymentState.ACTIVE;
-        bool notSender = issuedPayment.issuer != msg.sender;
+        bool notSender = issuedPayment.issuer != _msgSender();
         bool conditions = (notActive || notSender);
         if (conditions) {
             revert __NotSenderOrNotActive();
@@ -124,10 +125,10 @@ contract PayLock is ERC2771Context, Ownable, ERC721 {
         //Change payment state to Withdrawn.
         s_redeemablePayments[issuedPayment.receiver][issuedPayment.receiverId]
             .state = PaymentState.WITHDRAWN;
-        s_issuedPayments[msg.sender][index].state = PaymentState.WITHDRAWN;
+        s_issuedPayments[_msgSender()][index].state = PaymentState.WITHDRAWN;
         // Emit PaymentWithdrawn event
-        emit PaymentWithdrawn(msg.sender, issuedPayment);
-        (bool success, ) = msg.sender.call{value: issuedPayment.value}("");
+        emit PaymentWithdrawn(_msgSender(), issuedPayment);
+        (bool success, ) = _msgSender().call{value: issuedPayment.value}("");
         if (!success) {
             revert __TransferFailed();
         }
@@ -144,7 +145,9 @@ contract PayLock is ERC2771Context, Ownable, ERC721 {
      * Emits a {PaymentReedemed} event.
      */
     function RedeemPayment(uint256 _code) public payable {
-        payment[] memory reedemablePayments = s_redeemablePayments[msg.sender];
+        payment[] memory reedemablePayments = s_redeemablePayments[
+            _msgSender()
+        ];
         // No reedemable payments
         if (reedemablePayments.length == 0) {
             revert __NoReedemablePayments();
@@ -155,7 +158,8 @@ contract PayLock is ERC2771Context, Ownable, ERC721 {
             if (reedemablePayments[i].code == _code) {
                 bool notActive = reedemablePayments[i].state !=
                     PaymentState.ACTIVE;
-                bool notReceiver = reedemablePayments[i].receiver != msg.sender;
+                bool notReceiver = reedemablePayments[i].receiver !=
+                    _msgSender();
                 bool conditions = (notActive || notReceiver);
 
                 if (conditions) {
@@ -165,11 +169,11 @@ contract PayLock is ERC2771Context, Ownable, ERC721 {
                 s_issuedPayments[reedemablePayments[i].issuer][
                     reedemablePayments[i].issuerId
                 ].state = PaymentState.RECEIVED;
-                s_redeemablePayments[msg.sender][i].state = PaymentState
+                s_redeemablePayments[_msgSender()][i].state = PaymentState
                     .RECEIVED;
-                emit PaymentReedemed(msg.sender, reedemablePayments[i]);
+                emit PaymentReedemed(_msgSender(), reedemablePayments[i]);
 
-                (bool success, ) = msg.sender.call{
+                (bool success, ) = _msgSender().call{
                     value: reedemablePayments[i].value
                 }("");
                 if (!success) {
