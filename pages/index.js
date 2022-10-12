@@ -60,6 +60,10 @@ const Index = () => {
     formattedValue: "",
     value: ""
   });
+  const [fee, setFee] = useState("");
+  const [feeUSD, setFeeUSD] = useState("");
+  const [receivingAmount, setReceivingAmount] = useState("");
+  const [receivingAmountUSD, setReceivingAmountUSD] = useState("");
   const [USDValue, setUSDValue] = useState(undefined);
 
 
@@ -218,7 +222,12 @@ const Index = () => {
     // var estimatedGas = ethers.utils.formatUnits(Number(gasfee) * Number(contractFee._hex), "ether")
     // console.log("estimatedGas:", estimatedGas)
 
-    let transaction = await contract.CreatePayement(addressReciever, '1141', {
+    // Generates random code number 
+    let min = 1000;
+    let max = 9999;
+    var code = Math.round(Math.random() * (max - min) + min);
+
+    let transaction = await contract.CreatePayement(addressReciever, code, {
       value: value,
       gasLimit: 21000,
     }
@@ -233,6 +242,10 @@ const Index = () => {
       })
 
   }
+
+  // console.log('Fee:', fee)
+  console.log('receivingAmountusd:', receivingAmountUSD)
+
 
   return (
 
@@ -443,10 +456,22 @@ const Index = () => {
               suffix={token?.value}
               onValueChange={(values) => {
                 setSendAmount(values);
+
+                if (values.floatValue != 0 && values.floatValue) {
+                  // Sets Receiving Amount and Fee
+                  var fee = (Number(values.value) * 0.005).toPrecision(5) + token.value;
+                  setFee(fee)
+                  var feeUSD = "( $" + Intl.NumberFormat('en-US').format((Number(values.value) * 0.005) * USDValue) + ` USD)`
+                  setFeeUSD(feeUSD)
+
+                  var receivingAmount = (Number(values.value) - (Number(values.value) * 0.005)).toPrecision(5) + token.value
+                  setReceivingAmount(receivingAmount);
+                  var receivingUSD = '( $' + Intl.NumberFormat('en-US').format((Number(values.value) - Number(values.value) * 0.005) * USDValue) + ' USD)'
+                  setReceivingAmountUSD(receivingUSD)
+                }
+
               }}
             />
-
-
 
             <Accordion
               className={`dark:bg-[#100d23]`}
@@ -487,10 +512,10 @@ const Index = () => {
                       Fee:
                     </span>
                     <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2 `}>
-                      {sendAmount.floatValue != 0 && sendAmount.floatValue && (Number(sendAmount.value) * 0.005).toPrecision(5)} {sendAmount.floatValue != 0 && sendAmount.floatValue && token.value}
+                      {sendAmount.floatValue != 0 && sendAmount.floatValue && fee}
                     </span>
                     <span className={`font-extralight text-xs text-[#149adc] self-center  `}>
-                      {sendAmount.floatValue != 0 && sendAmount.floatValue && "( $" + Intl.NumberFormat('en-US').format((Number(sendAmount.value) * 0.005) * USDValue) + ` USD)`}
+                      {sendAmount.floatValue != 0 && sendAmount.floatValue && feeUSD}
                     </span>
 
 
@@ -500,10 +525,10 @@ const Index = () => {
                       Receiving:
                     </span>
                     <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2 `}>
-                      {sendAmount.floatValue != 0 && sendAmount.floatValue && (Number(sendAmount.value) - (Number(sendAmount.value) * 0.005)).toPrecision(5)} {sendAmount.floatValue != 0 && sendAmount.floatValue && token.value}
+                      {sendAmount.floatValue != 0 && sendAmount.floatValue && receivingAmount}
                     </span>
                     <span className={`font-extralight text-xs text-[#149adc] self-center block `}>
-                      {sendAmount.floatValue != 0 && sendAmount.floatValue && "( $" + Intl.NumberFormat('en-US').format(((Number(sendAmount.value) - (Number(sendAmount.value) * 0.005)) * USDValue).toFixed(2)) + ' USD)'}
+                      {sendAmount.floatValue != 0 && sendAmount.floatValue && receivingAmountUSD}
                     </span>
                   </span>
                   <span className={`flex`}>
