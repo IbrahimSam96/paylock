@@ -243,9 +243,6 @@ const Index = () => {
 
   }
 
-  // console.log('Fee:', fee)
-  console.log('receivingAmountusd:', receivingAmountUSD)
-
 
   return (
 
@@ -458,7 +455,7 @@ const Index = () => {
                 setSendAmount(values);
 
                 if (values.floatValue != 0 && values.floatValue) {
-                  // Sets Receiving Amount and Fee
+                  // Sets Receiving Amount and Fee and calculates usdValue
                   var fee = (Number(values.value) * 0.005).toPrecision(5) + token.value;
                   setFee(fee)
                   var feeUSD = "( $" + Intl.NumberFormat('en-US').format((Number(values.value) * 0.005) * USDValue) + ` USD)`
