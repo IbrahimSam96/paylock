@@ -212,16 +212,16 @@ const Index = () => {
   }
 
   const createtx = async () => {
-
-    let contract = new ethers.Contract(contractAddress, PayFactory.abi, signer);
-    let value = ethers.utils.parseEther(sendAmount.value);
-
     // Estimate fee, NOTE: ERRORS on Mumbai but works on eth mainnet
     // var gasfee = (await signer.getFeeData()).gasPrice._hex
     // var contractFee = await contract.estimateGas.CreatePayement(addressReciever, '1141')
     // var estimatedGas = ethers.utils.formatUnits(Number(gasfee) * Number(contractFee._hex), "ether")
     // console.log("estimatedGas:", estimatedGas)
 
+    let contract = new ethers.Contract(contractAddress, PayFactory.abi, signer);
+    let value = ethers.utils.parseEther(sendAmount.value);
+
+    // Transaction Variables
     // Generates random code number 
     let min = 1000;
     let max = 9999;
