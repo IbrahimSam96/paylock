@@ -1,31 +1,99 @@
-// SPDX-License-Identifier: GPL-3.0
+// SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.0;
-
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
-
+// ERC2771Context and Forwarder for relaying issued transactions ( Withdraw OR Redeem)
 import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import "@openzeppelin/contracts/metatx/MinimalForwarder.sol";
+// IERC20 - ERC20 Interface for transfering ERC20 tokens
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+// Chainlink Aggregator for PriceFeedS
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+// Imports token price conversioner library
+import "./PriceConverter.sol";
 
-error Ammount__Empty();
+// Reverting Errors
+error __AmountEmpty();
 error __NotSenderOrNotActive();
 error __NoReedemablePayments();
 error __InvalidCode();
 error __TransferFailed();
 error __TransferWithdrawn();
 
-contract PayLock is ERC2771Context, Ownable, ERC721 {
-    // Incrementer for tokenId
-    using Counters for Counters.Counter;
-    Counters.Counter private _tokenIdCounter;
+// ETH Mainnet PriceFeed Contract Addresses
+//  ETH / USD 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419
+//  USDC / USD 	0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6
+//  USDT / USD 	0x3E7d1eAB13ad0104d2750B8863b489D65364e32D
+//  DAI / USD 	0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9
+//  BTC / USD 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c
+// Polygon Mainnet PriceFeed Contract Addresses
+//  MATIC / USD 0xAB594600376Ec9fD91F8e885dADF0CE036862dE0
+//  USDC / USD 	0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7
+//  USDT / USD 	0x0A6513e40db6EB1b165753AD52E80663aeA50545
+//  DAI / USD   0x4746DeC9e833A82EC7C2C1356372CcF2cfcD2F3D
+//  WBTC / USD 	0xDE31F8bFBD8c84b5360CFACCa3539B938dd78ae6
+// Polygon Mumbai PriceFeed Contract Addresses
+//  MATIC / USD 0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada
+//  USDC / USD 	0x572dDec9087154dC5dfBB1546Bb62713147e0Ab0
+//  USDT / USD 	0x92C09849638959196E976289418e5973CC96d645
+//  DAI / USD   0x0FCAa9c899EC5A91eBc3D5Dd869De833b06fB046
+//  BTC / USD 	0x007A22900a3B98143368Bd5906f8E17e9867581b
 
-    // Initializes openzeppelin's ERC721.sol to mint NFT'S TO USERS for premium access.
-    constructor(MinimalForwarder forwarder)
-        ERC721("PayLock", "LOCK")
-        ERC2771Context(address(forwarder))
-    {}
+// Polygon Mumbai token addrress
+// USDC 0xe11A86849d99F524cAC3E7A0Ec1241828e332C62
+// USDT 0xA02f6adc7926efeBBd59Fd43A84f4E0c0c91e832
+// DAI 0xd393b1E02dA9831Ff419e22eA105aAe4c47E1253
+// WBTC 0x0d787a4a1548f673ed375445535a6c7A1EE56180
+
+// Forawarder 0xd6b13d7f334d4a43d5b4223e6ef12d9b3280d8ee
+// 0x0000000000000000000000000000000000000000
+contract PayLock is ERC2771Context, Ownable {
+    // Library
+    // ./PriceConverter gets token price conversions for detrmining max transaction fee
+    using PriceConverter for uint256;
+    // Immutables
+    address private immutable i_forwarder;
+    // Chainlink PriceFeeds - (token / USD)
+    AggregatorV3Interface private immutable i_priceFeedNative;
+    AggregatorV3Interface private immutable i_priceFeedUSDC;
+    AggregatorV3Interface private immutable i_priceFeedUSDT;
+    AggregatorV3Interface private immutable i_priceFeedDAI;
+    AggregatorV3Interface private immutable i_priceFeedBTC;
+    // Token Addresses
+    address private immutable i_USDCAddress;
+    address private immutable i_USDTAddress;
+    address private immutable i_DAIAddress;
+    address private immutable i_WBTCAddress;
+    // constants
+    uint256 public constant MAXIMUM_FEE_USD = 50 * 1e18;
+
+    // Contructor - Passing in & setting immutables
+    // Chainlink's priceFeed Addresses
+    // Supported ERC20 token Addresses
+    constructor(
+        MinimalForwarder forwarder,
+        address AggregatorNative,
+        address AggregatorUSDC,
+        address AggregatorUSDT,
+        address AggregatorDAI,
+        address AggregatordBTC,
+        address USDCAddress,
+        address USDTAddress,
+        address DAIAddress,
+        address WBTCAddress
+    ) ERC2771Context(address(forwarder)) {
+        i_forwarder = address(forwarder);
+        i_priceFeedNative = AggregatorV3Interface(AggregatorNative);
+        i_priceFeedUSDC = AggregatorV3Interface(AggregatorUSDC);
+        i_priceFeedUSDT = AggregatorV3Interface(AggregatorUSDT);
+        i_priceFeedDAI = AggregatorV3Interface(AggregatorDAI);
+        i_priceFeedBTC = AggregatorV3Interface(AggregatordBTC);
+
+        i_USDCAddress = USDCAddress;
+        i_USDTAddress = USDTAddress;
+        i_DAIAddress = DAIAddress;
+        i_WBTCAddress = WBTCAddress;
+    }
 
     // Enums
     enum PaymentState {
@@ -41,14 +109,13 @@ contract PayLock is ERC2771Context, Ownable, ERC721 {
         uint256 issuerId;
         uint256 receiverId;
         uint256 code;
+        address tokenAddress;
         PaymentState state;
     }
-    // Protocol Fee Collection Balance
-    struct PaySafe {
-        uint256 balance;
-    }
     // State
-    PaySafe public s_PaySafe;
+    // Paylock fee collection
+    uint256 public s_PaySafe;
+    mapping(address => uint256) public s_PaySafeTokenBalances;
     // A user has 2 arrays of issued & redeemable payments
     mapping(address => payment[]) public s_issuedPayments;
     mapping(address => payment[]) public s_redeemablePayments;
@@ -59,47 +126,203 @@ contract PayLock is ERC2771Context, Ownable, ERC721 {
 
     /**
      * @dev Issue a payment.
-     * `_receiver` Is a parameter supplied by the frontend to the issuer of transaction`.
-     * `_code` IS A UID generated when transaction is created by issuer`.
+     * `_receiver` Receiver address`.
+     * `_code` A random 4 digit number`.
      *
      * Requirements:
      * - `msg.value` Payment needs to have value i,e not empty.
      *
-     * Emits a {PaymentWithdrawn} event.
+     * Emits a {PaymentIssued} event.
      */
-    function CreatePayement(address payable _receiver, uint256 _code)
-        public
-        payable
-    {
-        // If payment is empty revert transaction
-        bool AmountEmpty = msg.value == 0;
-        if (AmountEmpty) {
-            revert Ammount__Empty();
-        }
-        // prepare new memory payment struct
-        payment memory newPayment;
-        //IF user has a LOCK token, full value transaction fees = 0.0%
-        if (balanceOf(msg.sender) > 0) {
-            newPayment.value = msg.value;
-        }
-        //IF user has no LOCK token, value - 0.5% transaction fees = 0.5%
-        if (balanceOf(msg.sender) == 0) {
-            newPayment.value = msg.value - msg.value / 200;
+    function CreatePayement(
+        address payable _receiver,
+        uint256 _code,
+        address _tokenAddress,
+        uint256 _tokenAmount
+    ) public payable {
+        if (_tokenAddress == address(0)) {
+            // If payment is empty revert transaction
+            bool AmountEmpty = msg.value == 0;
+            if (AmountEmpty) {
+                revert __AmountEmpty();
+            }
+            // prepare new memory payment struct
+            payment memory newPayment;
+            //If USD fee value (0.5%) equals more than 50USD, cap fee at 50 USD
+            if (
+                (msg.value / 200).getConversionRate(i_priceFeedNative) >
+                MAXIMUM_FEE_USD
+            ) {
+                newPayment.value =
+                    msg.value -
+                    MAXIMUM_FEE_USD.getMaxRate(i_priceFeedNative);
+                s_PaySafe += MAXIMUM_FEE_USD.getMaxRate(i_priceFeedNative);
 
-            s_PaySafe.balance += msg.value / 200;
+                (bool success, ) = i_forwarder.call{
+                    value: MAXIMUM_FEE_USD.getMaxRate(i_priceFeedNative)
+                }("");
+                if (!success) {
+                    revert __TransferFailed();
+                }
+            } else {
+                newPayment.value = msg.value - msg.value / 200;
+                s_PaySafe += msg.value / 200;
+
+                (bool success, ) = i_forwarder.call{value: msg.value / 200}("");
+                if (!success) {
+                    revert __TransferFailed();
+                }
+            }
+
+            // Issue payment
+            newPayment.issuer = payable(msg.sender);
+            newPayment.receiver = payable(_receiver);
+            newPayment.issuerId = s_issuedPayments[msg.sender].length;
+            newPayment.receiverId = s_redeemablePayments[_receiver].length;
+            newPayment.code = _code;
+            newPayment.tokenAddress = _tokenAddress;
+            newPayment.state = PaymentState.ACTIVE;
+            // ADD payment to both arrays of issuer and reedemable transactions
+            s_issuedPayments[msg.sender].push(newPayment);
+            s_redeemablePayments[_receiver].push(newPayment);
+            // Emit PaymentIssued event
+            emit PaymentIssued(msg.sender, newPayment);
+        } else {
+            // If _tokenAmount is empty revert transaction
+            bool AmountEmpty = _tokenAmount == 0;
+            if (AmountEmpty) {
+                revert __AmountEmpty();
+            }
+            // prepare new memory payment struct
+            payment memory newPayment;
+            // Determines which price feed and ERC20 contract to interact with
+            if (_tokenAddress == i_USDCAddress) {
+                // Transfer tokens
+                bool success = IERC20(i_USDCAddress).transferFrom(
+                    msg.sender,
+                    address(this),
+                    _tokenAmount
+                );
+                if (!success) {
+                    revert __TransferFailed();
+                }
+                // IF USD value (0.5%) a of transaction  equals more than 50USD, cap fee at 50 USD
+                if (
+                    (_tokenAmount / 200).getConversionRate(i_priceFeedUSDC) >=
+                    MAXIMUM_FEE_USD
+                ) {
+                    newPayment.value =
+                        _tokenAmount -
+                        MAXIMUM_FEE_USD.getMaxRate(i_priceFeedUSDC);
+                    s_PaySafeTokenBalances[i_USDCAddress] += MAXIMUM_FEE_USD
+                        .getMaxRate(i_priceFeedUSDC);
+                }
+                if (
+                    _tokenAmount.getConversionRate(i_priceFeedUSDC) <
+                    MAXIMUM_FEE_USD
+                ) {
+                    newPayment.value = _tokenAmount - _tokenAmount / 200;
+                    s_PaySafeTokenBalances[i_USDCAddress] += _tokenAmount / 200;
+                }
+            } else if (_tokenAddress == i_USDTAddress) {
+                // Transfer tokens
+                bool success = IERC20(i_USDTAddress).transferFrom(
+                    msg.sender,
+                    address(this),
+                    _tokenAmount
+                );
+                if (!success) {
+                    revert __TransferFailed();
+                }
+                // If the fee USD value (0.5%) a of transaction amount equals more than 50USD, cap fee at 50 USD else use (0.5%) of _tokenAmount
+                if (
+                    (_tokenAmount / 200).getConversionRate(i_priceFeedUSDT) >=
+                    MAXIMUM_FEE_USD
+                ) {
+                    newPayment.value =
+                        _tokenAmount -
+                        MAXIMUM_FEE_USD.getMaxRate(i_priceFeedUSDT);
+                    s_PaySafeTokenBalances[i_USDTAddress] += MAXIMUM_FEE_USD
+                        .getMaxRate(i_priceFeedUSDT);
+                }
+                if (
+                    _tokenAmount.getConversionRate(i_priceFeedUSDT) <
+                    MAXIMUM_FEE_USD
+                ) {
+                    newPayment.value = _tokenAmount - _tokenAmount / 200;
+                    s_PaySafeTokenBalances[i_USDTAddress] += _tokenAmount / 200;
+                }
+            } else if (_tokenAddress == i_DAIAddress) {
+                // Transfer tokens
+                bool success = IERC20(i_DAIAddress).transferFrom(
+                    msg.sender,
+                    address(this),
+                    _tokenAmount
+                );
+                if (!success) {
+                    revert __TransferFailed();
+                }
+                // If the fee USD value (0.5%) a of transaction amount equals more than 50USD, cap fee at 50 USD else use (0.5%) of _tokenAmount
+                if (
+                    (_tokenAmount / 200).getConversionRate(i_priceFeedDAI) >=
+                    MAXIMUM_FEE_USD
+                ) {
+                    newPayment.value =
+                        _tokenAmount -
+                        MAXIMUM_FEE_USD.getMaxRate(i_priceFeedDAI);
+                    s_PaySafeTokenBalances[i_DAIAddress] += MAXIMUM_FEE_USD
+                        .getMaxRate(i_priceFeedDAI);
+                }
+                if (
+                    _tokenAmount.getConversionRate(i_priceFeedDAI) <
+                    MAXIMUM_FEE_USD
+                ) {
+                    newPayment.value = _tokenAmount - _tokenAmount / 200;
+                    s_PaySafeTokenBalances[i_DAIAddress] += _tokenAmount / 200;
+                }
+            } else if (_tokenAddress == i_WBTCAddress) {
+                // Transfer tokens
+                bool success = IERC20(i_WBTCAddress).transferFrom(
+                    msg.sender,
+                    address(this),
+                    _tokenAmount
+                );
+                if (!success) {
+                    revert __TransferFailed();
+                }
+                // If the fee USD value (0.5%) a of transaction amount equals more than 50USD, cap fee at 50 USD else use (0.5%) of _tokenAmount
+                if (
+                    (_tokenAmount / 200).getConversionRate(i_priceFeedBTC) >=
+                    MAXIMUM_FEE_USD
+                ) {
+                    newPayment.value =
+                        _tokenAmount -
+                        MAXIMUM_FEE_USD.getMaxRate(i_priceFeedBTC);
+                    s_PaySafeTokenBalances[i_WBTCAddress] += MAXIMUM_FEE_USD
+                        .getMaxRate(i_priceFeedBTC);
+                }
+                if (
+                    _tokenAmount.getConversionRate(i_priceFeedBTC) <
+                    MAXIMUM_FEE_USD
+                ) {
+                    newPayment.value = _tokenAmount - _tokenAmount / 200;
+                    s_PaySafeTokenBalances[i_WBTCAddress] += _tokenAmount / 200;
+                }
+            }
+            // Issue payment
+            newPayment.issuer = payable(msg.sender);
+            newPayment.receiver = payable(_receiver);
+            newPayment.issuerId = s_issuedPayments[msg.sender].length;
+            newPayment.receiverId = s_redeemablePayments[_receiver].length;
+            newPayment.code = _code;
+            newPayment.tokenAddress = _tokenAddress;
+            newPayment.state = PaymentState.ACTIVE;
+            // ADD payment to both arrays of issuer and reedemable transactions
+            s_issuedPayments[msg.sender].push(newPayment);
+            s_redeemablePayments[_receiver].push(newPayment);
+            // Emit PaymentIssued event
+            emit PaymentIssued(msg.sender, newPayment);
         }
-        // Issue payment
-        newPayment.issuer = payable(msg.sender);
-        newPayment.receiver = payable(_receiver);
-        newPayment.issuerId = s_issuedPayments[msg.sender].length;
-        newPayment.receiverId = s_redeemablePayments[_receiver].length;
-        newPayment.code = _code;
-        newPayment.state = PaymentState.ACTIVE;
-        // ADD payment to both arrays of issuer and reedemable transactions
-        s_issuedPayments[msg.sender].push(newPayment);
-        s_redeemablePayments[_receiver].push(newPayment);
-        // Emit PaymentIssued event
-        emit PaymentIssued(msg.sender, newPayment);
     }
 
     /**
@@ -128,15 +351,56 @@ contract PayLock is ERC2771Context, Ownable, ERC721 {
         s_issuedPayments[_msgSender()][index].state = PaymentState.WITHDRAWN;
         // Emit PaymentWithdrawn event
         emit PaymentWithdrawn(_msgSender(), issuedPayment);
-        (bool success, ) = _msgSender().call{value: issuedPayment.value}("");
-        if (!success) {
-            revert __TransferFailed();
+        // Value transfer either native or erc20 transfer.
+        if (issuedPayment.tokenAddress == address(0)) {
+            (bool success, ) = _msgSender().call{value: issuedPayment.value}(
+                ""
+            );
+            if (!success) {
+                revert __TransferFailed();
+            }
+        } else if (issuedPayment.tokenAddress == i_USDCAddress) {
+            // Transfer tokens
+            bool success = IERC20(i_USDCAddress).transfer(
+                msg.sender,
+                issuedPayment.value
+            );
+            if (!success) {
+                revert __TransferFailed();
+            }
+        } else if (issuedPayment.tokenAddress == i_USDTAddress) {
+            // Transfer tokens
+            bool success = IERC20(i_USDTAddress).transfer(
+                msg.sender,
+                issuedPayment.value
+            );
+            if (!success) {
+                revert __TransferFailed();
+            }
+        } else if (issuedPayment.tokenAddress == i_DAIAddress) {
+            // Transfer tokens
+            bool success = IERC20(i_DAIAddress).transfer(
+                msg.sender,
+                issuedPayment.value
+            );
+            if (!success) {
+                revert __TransferFailed();
+            }
+        } else if (issuedPayment.tokenAddress == i_WBTCAddress) {
+            // Transfer tokens
+            bool success = IERC20(i_WBTCAddress).transfer(
+                msg.sender,
+                issuedPayment.value
+            );
+            if (!success) {
+                revert __TransferFailed();
+            }
         }
     }
 
     /**
      * @dev Redeem _code to receive Payment.
-     * `_code` A UID generzted  by the issuer of transaction`.
+     * `_code` A random 4 digit number `.
      *
      * Requirements:
      * - `Active` Payment needs to be active i.e Not withdrawn or Received.
@@ -173,11 +437,56 @@ contract PayLock is ERC2771Context, Ownable, ERC721 {
                     .RECEIVED;
                 emit PaymentReedemed(_msgSender(), reedemablePayments[i]);
 
-                (bool success, ) = _msgSender().call{
-                    value: reedemablePayments[i].value
-                }("");
-                if (!success) {
-                    revert __TransferFailed();
+                // Value transfer either native or erc20 transfer.
+                if (reedemablePayments[i].tokenAddress == address(0)) {
+                    (bool success, ) = _msgSender().call{
+                        value: reedemablePayments[i].value
+                    }("");
+                    if (!success) {
+                        revert __TransferFailed();
+                    }
+                } else if (
+                    reedemablePayments[i].tokenAddress == i_USDCAddress
+                ) {
+                    // Transfer tokens
+                    bool success = IERC20(i_USDCAddress).transfer(
+                        msg.sender,
+                        reedemablePayments[i].value
+                    );
+                    if (!success) {
+                        revert __TransferFailed();
+                    }
+                } else if (
+                    reedemablePayments[i].tokenAddress == i_USDTAddress
+                ) {
+                    // Transfer tokens
+                    bool success = IERC20(i_USDTAddress).transfer(
+                        msg.sender,
+                        reedemablePayments[i].value
+                    );
+                    if (!success) {
+                        revert __TransferFailed();
+                    }
+                } else if (reedemablePayments[i].tokenAddress == i_DAIAddress) {
+                    // Transfer tokens
+                    bool success = IERC20(i_DAIAddress).transfer(
+                        msg.sender,
+                        reedemablePayments[i].value
+                    );
+                    if (!success) {
+                        revert __TransferFailed();
+                    }
+                } else if (
+                    reedemablePayments[i].tokenAddress == i_WBTCAddress
+                ) {
+                    // Transfer tokens
+                    bool success = IERC20(i_WBTCAddress).transfer(
+                        msg.sender,
+                        reedemablePayments[i].value
+                    );
+                    if (!success) {
+                        revert __TransferFailed();
+                    }
                 }
             } else {
                 revert __InvalidCode();
@@ -185,25 +494,61 @@ contract PayLock is ERC2771Context, Ownable, ERC721 {
         }
     }
 
-    // Withdraw  fees collected
+    // Withdraw native protocol fees
     function withdrawPaySafeBalance() public payable onlyOwner {
-        (bool success, ) = msg.sender.call{value: s_PaySafe.balance}("");
+        (bool success, ) = msg.sender.call{value: s_PaySafe}("");
         if (!success) {
             revert __TransferFailed();
         }
+        s_PaySafe = 0;
     }
 
-    // Mints a ERC721 token to remove 0.5% fees
-    function BuyLockToken() public payable {
-        if (msg.value != 1 ether) {
-            revert __TransferFailed();
+    // Withdraw erc20 protocol fees
+    function withdrawPaySafeBalance(address _tokenAddress)
+        public
+        payable
+        onlyOwner
+    {
+        if (_tokenAddress == i_USDCAddress) {
+            bool success = IERC20(i_USDCAddress).transfer(
+                msg.sender,
+                s_PaySafeTokenBalances[i_USDCAddress]
+            );
+            if (!success) {
+                revert __TransferFailed();
+            }
+            s_PaySafeTokenBalances[i_USDCAddress] = 0;
+        } else if (_tokenAddress == i_USDTAddress) {
+            // Transfer tokens
+            bool success = IERC20(i_USDTAddress).transfer(
+                msg.sender,
+                s_PaySafeTokenBalances[i_USDTAddress]
+            );
+            if (!success) {
+                revert __TransferFailed();
+            }
+            s_PaySafeTokenBalances[i_USDTAddress] = 0;
+        } else if (_tokenAddress == i_DAIAddress) {
+            // Transfer tokens
+            bool success = IERC20(i_DAIAddress).transfer(
+                msg.sender,
+                s_PaySafeTokenBalances[i_DAIAddress]
+            );
+            if (!success) {
+                revert __TransferFailed();
+            }
+            s_PaySafeTokenBalances[i_DAIAddress] = 0;
+        } else if (_tokenAddress == i_WBTCAddress) {
+            // Transfer tokens
+            bool success = IERC20(i_WBTCAddress).transfer(
+                msg.sender,
+                s_PaySafeTokenBalances[i_WBTCAddress]
+            );
+            if (!success) {
+                revert __TransferFailed();
+            }
+            s_PaySafeTokenBalances[i_WBTCAddress] = 0;
         }
-
-        s_PaySafe.balance += msg.value;
-        // mint ERC721 LOCK token to grant No Fee Transactions for ever. .
-        uint256 tokenId = _tokenIdCounter.current();
-        _tokenIdCounter.increment();
-        _safeMint(msg.sender, tokenId);
     }
 
     // Overiders for ERC2711Context

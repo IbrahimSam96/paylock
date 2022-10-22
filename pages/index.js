@@ -17,9 +17,11 @@ import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 
-import { contractAddress } from '../config';
-import PayFactory from '../artifacts/contracts/PayFactory.sol/PayLock.json'
+import { PolygonAddress } from '../polygon';
+import { mumbaiAddress } from '../mumbai';
+import { EthAddress } from '../eth'
 
+import PayFactory from '../artifacts/contracts/PayFactory.sol/PayLock.json'
 // Background #131341
 // Component #100d23
 // Button #1e1d45
@@ -66,6 +68,7 @@ const Index = () => {
   const [receivingAmountUSD, setReceivingAmountUSD] = useState("");
   const [USDValue, setUSDValue] = useState(undefined);
 
+  const [contractAddress, setContractAddress] = useState('');
 
   const { data: signer } = useSigner();
 
@@ -133,9 +136,9 @@ const Index = () => {
           svg: connection.chain?.nativeCurrency.symbol,
           address: undefined
         },
-        { value: 'DAI', label: 'DAI', svg: 'DAI', address: "0x001B3B4d0F3714Ca98ba10F6042DaEbF0B1B7b6F" },
-        { value: 'USDT', label: 'USDT', svg: 'USDT', address: "0xe583769738b6dd4E7CAF8451050d1948BE717679" },
-        { value: 'USDC', label: 'USDC', svg: 'USDC', address: "0xe6b8a5CF854791412c1f6EFC7CAf629f5Df1c747" },
+        { value: 'DAI', label: 'DAI', svg: 'DAI', address: "0xd393b1E02dA9831Ff419e22eA105aAe4c47E1253" },
+        { value: 'USDT', label: 'USDT', svg: 'USDT', address: "0xA02f6adc7926efeBBd59Fd43A84f4E0c0c91e832" },
+        { value: 'USDC', label: 'USDC', svg: 'USDC', address: "0xe11A86849d99F524cAC3E7A0Ec1241828e332C62" },
         { value: 'WBTC', label: 'WBTC', svg: 'WBTC', address: "0x0d787a4a1548f673ed375445535a6c7A1EE56180" },
       ];
     }
@@ -146,10 +149,20 @@ const Index = () => {
     setIsSSR(false);
   }, []);
 
-  // Refresh token value when connection chain changes
+  // Refresh token value and paylock evm contract adddress when connection chain changes
   useEffect(() => {
+    // changes token
     if (tokenOptions) {
       setToken(tokenOptions[0])
+    }
+    if (connection.chain?.name == "Ethereum") {
+      setContractAddress(EthAddress)
+    }
+    if (connection.chain?.name == 'Polygon') {
+      setContractAddress(PolygonAddress)
+    }
+    if (connection.chain?.name == 'Polygon Mumbai') {
+      setContractAddress(mumbaiAddress)
     }
   }, [connection.chain, tokenOptions]);
 
@@ -200,7 +213,6 @@ const Index = () => {
       }
     }
 
-
   }, [token, connection.chain])
 
   const withdrawTx = async () => {
@@ -218,28 +230,95 @@ const Index = () => {
     // var estimatedGas = ethers.utils.formatUnits(Number(gasfee) * Number(contractFee._hex), "ether")
     // console.log("estimatedGas:", estimatedGas)
 
-    let contract = new ethers.Contract(contractAddress, PayFactory.abi, signer);
-    let value = ethers.utils.parseEther(sendAmount.value);
-
     // Transaction Variables
     // Generates random code number 
     let min = 1000;
     let max = 9999;
-    var code = Math.round(Math.random() * (max - min) + min);
+    var _code = Math.round(Math.random() * (max - min) + min);
 
-    let transaction = await contract.CreatePayement(addressReciever, code, {
-      value: value,
-      gasLimit: 21000,
-    }
-    );
+    if (!token.address) {
+      console.log("token.value equal to eth")
 
-    await transaction.wait().then((res) => {
-      // toast.update(toastId.current, { type: toast.TYPE.SUCCESS, autoClose: 5000, render: "Transaction Successful" });
-    })
-      .catch((err) => {
-        // toast.update(toastId.current, { type: toast.TYPE.ERROR, autoClose: 5000, render: "Transaction Failed" });
-        console.log(err)
+      let contract = new ethers.Contract(contractAddress, PayFactory.abi, signer);
+      let value = ethers.utils.parseEther(sendAmount.value);
+      let _tokenAddress = '0x0000000000000000000000000000000000000000'
+      let _tokenAmount = ethers.utils.parseEther('0');
+
+      let transaction = await contract.CreatePayement(addressReciever, _code, _tokenAddress, _tokenAmount, {
+        value: value,
+        gasLimit: 21000,
+      }
+      );
+
+      await transaction.wait().then((res) => {
+        // toast.update(toastId.current, { type: toast.TYPE.SUCCESS, autoClose: 5000, render: "Transaction Successful" });
       })
+        .catch((err) => {
+          // toast.update(toastId.current, { type: toast.TYPE.ERROR, autoClose: 5000, render: "Transaction Failed" });
+          console.log(err)
+        })
+    }
+
+    if (token.value != "MATIC" || 'ETH') {
+
+      const IERC20ABI = require("../artifacts/@openzeppelin/contracts/token/ERC20/IERC20.sol/IERC20.json");
+      let erc20Contract = new ethers.Contract(token.address, IERC20ABI.abi, signer);
+
+      let data = await erc20Contract.allowance(address, contractAddress);
+
+      // If allowance is smaller 
+      if (parseInt(data._hex) < (sendAmount.floatValue * 1e18)) {
+
+        let contract = new ethers.Contract(token.address, IERC20ABI.abi, signer);
+
+        let transaction = await contract.approve(contractAddress, ethers.utils.parseEther(sendAmount.value))
+
+        await transaction.wait().then((res) => {
+          console.log(res)
+
+        }).catch((err) => {
+          console.log(err)
+        })
+
+        // Create Payment
+        let createPaymentContract = new ethers.Contract(contractAddress, PayFactory.abi, signer);
+        let _tokenAddress = token.address;
+        let _tokenAmount = ethers.utils.parseEther(sendAmount.value);
+
+        let createPaymentTransaction = await createPaymentContract.CreatePayement(addressReciever, _code, _tokenAddress, _tokenAmount, {
+          gasLimit: 21000
+        });
+
+        await createPaymentTransaction.wait().then((res) => {
+          console.log(res)
+          // toast.update(toastId.current, { type: toast.TYPE.SUCCESS, autoClose: 5000, render: "Transaction Successful" });
+        })
+          .catch((err) => {
+            // toast.update(toastId.current, { type: toast.TYPE.ERROR, autoClose: 5000, render: "Transaction Failed" });
+            console.log(err)
+          })
+
+      }
+      else {
+        let createPaymentContract = new ethers.Contract(contractAddress, PayFactory.abi, signer);
+        let _tokenAddress = token.address;
+        let _tokenAmount = ethers.utils.parseEther(sendAmount.value);
+
+        let createPaymentTransaction = await createPaymentContract.CreatePayement(addressReciever, _code, _tokenAddress, _tokenAmount, {
+          gasLimit: 21000
+        });
+
+        await createPaymentTransaction.wait().then((res) => {
+          console.log(res)
+          // toast.update(toastId.current, { type: toast.TYPE.SUCCESS, autoClose: 5000, render: "Transaction Successful" });
+        })
+          .catch((err) => {
+            // toast.update(toastId.current, { type: toast.TYPE.ERROR, autoClose: 5000, render: "Transaction Failed" });
+            console.log(err)
+          })
+      }
+
+    }
 
   }
 
@@ -263,7 +342,6 @@ const Index = () => {
             alt={'error'}
             src={'/daaps.svg'}
             onClick={() => {
-              setToken(tokenOptions[0])
             }}
           />
 
@@ -575,6 +653,16 @@ const Index = () => {
 
             {!isDisconnected && addressReciever != '' && token && token.value == connection.chain?.nativeCurrency.symbol && Number(nativeBalance.data?.value) != 0 &&
               sendAmount.floatValue != undefined && sendAmount.floatValue != 0 && Number(sendAmount.value) <= Number(nativeBalance.data.formatted) &&
+
+              <button onClick={() => {
+                createtx();
+              }} className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm `}>
+                Send
+              </button>
+            }
+
+            {!isDisconnected && addressReciever != '' && token && token.value != connection.chain?.nativeCurrency.symbol && Number(tokenBalance.data?.value) != 0 &&
+              sendAmount.floatValue != undefined && sendAmount.floatValue != 0 && Number(sendAmount.value) <= Number(tokenBalance.data.formatted) &&
 
               <button onClick={() => {
                 createtx();
