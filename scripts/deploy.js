@@ -6,12 +6,14 @@ require('dotenv').config();
 async function main() {
 
   const chainId = hre.network.config.chainId;
+  console.log(process.env.NEXT_PUBLIC_APIKey)
+  console.log(process.env.NEXT_PUBLIC_APISecret)
 
   const credentials = { apiKey: process.env.NEXT_PUBLIC_APIKey, apiSecret: process.env.NEXT_PUBLIC_APISecret };
   const provider = new DefenderRelayProvider(credentials);
   const signer = new DefenderRelaySigner(credentials, provider, { speed: 'fast' });
 
-  const PayFactory = await hre.ethers.getContractFactory("PayLock");
+  const PaylockContract = await hre.ethers.getContractFactory("PayLock");
 
   let MinimalForwarder = ''
   let AggregatorNative = ''
@@ -66,7 +68,7 @@ async function main() {
     WBTCAddress = '0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6'
 
   }
-  const Paylock = await Paylock.connect(signer).deploy(
+  const Paylock = await PaylockContract.connect(signer).deploy(
     MinimalForwarder,
     AggregatorNative, AggregatorUSDC, AggregatorUSDT,
     AggregatorDAI, AggregatordBTC, USDCAddress, USDTAddress, DAIAddress, WBTCAddress
