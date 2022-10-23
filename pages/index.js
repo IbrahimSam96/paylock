@@ -68,6 +68,8 @@ const Index = () => {
   const [receivingAmountUSD, setReceivingAmountUSD] = useState("");
   const [USDValue, setUSDValue] = useState(undefined);
 
+  const [tokenAllowance, setTokenAllowance] = useState(false);
+  const [transactionLoading, setTransactionLoading] = useState(false);
   const [contractAddress, setContractAddress] = useState('');
 
   const { data: signer } = useSigner();
@@ -212,8 +214,30 @@ const Index = () => {
         })
       }
     }
-
   }, [token, connection.chain])
+  // Checks allowance 
+  useEffect(() => {
+    if (token?.address && sendAmount.value) {
+      console.log('Checking allowance')
+      const checkAllowance = async () => {
+        const IERC20ABI = require("../artifacts/@openzeppelin/contracts/token/ERC20/IERC20.sol/IERC20.json");
+        let erc20Contract = new ethers.Contract(token.address, IERC20ABI.abi, signer);
+
+        let data = await erc20Contract.allowance(address, contractAddress);
+        console.log(parseInt(data._hex) / 1e18)
+        // If allowance is smaller 
+        if (parseInt(data._hex) < (sendAmount.floatValue * 1e18)) {
+          setTokenAllowance(true);
+        }
+        else {
+          setTokenAllowance(false);
+        }
+      }
+      checkAllowance();
+
+    }
+
+  }, [token, connection.chain, sendAmount])
 
   const withdrawTx = async () => {
     var message = `Sending ${addressReciever} :  ${sendAmount.formattedValue}`
@@ -235,93 +259,103 @@ const Index = () => {
     let min = 1000;
     let max = 9999;
     var _code = Math.round(Math.random() * (max - min) + min);
-
+    // If no token address we do a native token interaction
     if (!token.address) {
-      console.log("token.value equal to eth")
+      try {
+        // adds spinner
+        setTransactionLoading(true);
 
-      let contract = new ethers.Contract(contractAddress, PayFactory.abi, signer);
-      let value = ethers.utils.parseEther(sendAmount.value);
-      let _tokenAddress = '0x0000000000000000000000000000000000000000'
-      let _tokenAmount = ethers.utils.parseEther('0');
+        let paylockContract = new ethers.Contract(contractAddress, PayFactory.abi, signer);
+        let value = ethers.utils.parseEther((sendAmount.value).toString());
+        let _tokenAddress = '0x0000000000000000000000000000000000000000'
+        let _tokenAmount = ethers.utils.parseEther('0');
 
-      let transaction = await contract.CreatePayement(addressReciever, _code, _tokenAddress, _tokenAmount, {
-        value: value,
-        gasLimit: 21000,
-      }
-      );
-
-      await transaction.wait().then((res) => {
-        // toast.update(toastId.current, { type: toast.TYPE.SUCCESS, autoClose: 5000, render: "Transaction Successful" });
-      })
-        .catch((err) => {
-          // toast.update(toastId.current, { type: toast.TYPE.ERROR, autoClose: 5000, render: "Transaction Failed" });
-          console.log(err)
-        })
-    }
-
-    if (token.value != "MATIC" || 'ETH') {
-
-      const IERC20ABI = require("../artifacts/@openzeppelin/contracts/token/ERC20/IERC20.sol/IERC20.json");
-      let erc20Contract = new ethers.Contract(token.address, IERC20ABI.abi, signer);
-
-      let data = await erc20Contract.allowance(address, contractAddress);
-
-      // If allowance is smaller 
-      if (parseInt(data._hex) < (sendAmount.floatValue * 1e18)) {
-
-        let contract = new ethers.Contract(token.address, IERC20ABI.abi, signer);
-
-        let transaction = await contract.approve(contractAddress, ethers.utils.parseEther(sendAmount.value))
-
+        let transaction = await paylockContract.CreatePayement(addressReciever, _code, _tokenAddress, _tokenAmount, {
+          value: value,
+          gasLimit: 21000,
+        }
+        );
         await transaction.wait().then((res) => {
-          console.log(res)
-
-        }).catch((err) => {
-          console.log(err)
-        })
-
-        // Create Payment
-        let createPaymentContract = new ethers.Contract(contractAddress, PayFactory.abi, signer);
-        let _tokenAddress = token.address;
-        let _tokenAmount = ethers.utils.parseEther(sendAmount.value);
-
-        let createPaymentTransaction = await createPaymentContract.CreatePayement(addressReciever, _code, _tokenAddress, _tokenAmount, {
-          gasLimit: 21000
-        });
-
-        await createPaymentTransaction.wait().then((res) => {
-          console.log(res)
+          setTransactionLoading(false);
           // toast.update(toastId.current, { type: toast.TYPE.SUCCESS, autoClose: 5000, render: "Transaction Successful" });
         })
           .catch((err) => {
+            setTransactionLoading(false);
             // toast.update(toastId.current, { type: toast.TYPE.ERROR, autoClose: 5000, render: "Transaction Failed" });
             console.log(err)
           })
+
+      } catch (error) {
+        setTransactionLoading(false);
+      }
+    }
+    // If token address exists we do a erc20 token interaction
+    if (token.address) {
+      // Check for token allowance 
+      if (tokenAllowance) {
+        try {
+          // Adds spinner 
+          setTransactionLoading(true);
+
+          const IERC20ABI = require("../artifacts/@openzeppelin/contracts/token/ERC20/IERC20.sol/IERC20.json");
+          let contract = new ethers.Contract(token.address, IERC20ABI.abi, signer);
+
+          let transaction = await contract.approve(contractAddress, ethers.utils.parseEther((sendAmount.value).toString()));
+
+          //  Block of code to try
+          await transaction.wait().then((res) => {
+            // resolves spinner and allows to createPayment
+            setTransactionLoading(false);
+            setTokenAllowance(false);
+
+            console.log(res)
+
+          }).catch((err) => {
+            // resolves spinner 
+            setTransactionLoading(false);
+            console.log(err)
+          })
+        }
+        //  Block of code to handle errors
+        catch (err) {
+          console.log(err)
+          setTransactionLoading(false);
+        }
 
       }
       else {
-        let createPaymentContract = new ethers.Contract(contractAddress, PayFactory.abi, signer);
-        let _tokenAddress = token.address;
-        let _tokenAmount = ethers.utils.parseEther(sendAmount.value);
+        try {
+          // adds spinner
+          setTransactionLoading(true);
+          // Create Payment  //  token allowance is OK. 
+          let paylockContract = new ethers.Contract(contractAddress, PayFactory.abi, signer);
+          let _tokenAddress = token.address;
+          let _tokenAmount = ethers.utils.parseEther((sendAmount.value).toString());
 
-        let createPaymentTransaction = await createPaymentContract.CreatePayement(addressReciever, _code, _tokenAddress, _tokenAmount, {
-          gasLimit: 21000
-        });
+          let createPaymentTransaction = await paylockContract.CreatePayement(addressReciever, _code, _tokenAddress, _tokenAmount, {
+            gasLimit: 21000
+          });
 
-        await createPaymentTransaction.wait().then((res) => {
-          console.log(res)
-          // toast.update(toastId.current, { type: toast.TYPE.SUCCESS, autoClose: 5000, render: "Transaction Successful" });
-        })
-          .catch((err) => {
-            // toast.update(toastId.current, { type: toast.TYPE.ERROR, autoClose: 5000, render: "Transaction Failed" });
-            console.log(err)
+
+          await createPaymentTransaction.wait().then((res) => {
+            // resolves spinner and transaction state
+            setTransactionLoading(false);
+            console.log(res)
+            // toast.update(toastId.current, { type: toast.TYPE.SUCCESS, autoClose: 5000, render: "Transaction Successful" });
           })
+            .catch((err) => {
+              setTransactionLoading(false);
+              // toast.update(toastId.current, { type: toast.TYPE.ERROR, autoClose: 5000, render: "Transaction Failed" });
+              console.log(err)
+            })
+        }
+        catch (err) {
+          console.log(err);
+          setTransactionLoading(false);
+        }
       }
-
     }
-
   }
-
 
   return (
 
@@ -411,7 +445,7 @@ const Index = () => {
         <React.Fragment>
           <span className={` self-start justify-self-auto sm:justify-self-center 
           col-start-1 col-end-8 row-start-3 row-end-4 sm:mx-4 p-4 mx-4
-           grid grid-rows-[40px,min-content,30px,30px,40px,30px,30px,min-content,50px] grid-cols-1
+           grid grid-rows-[40px,min-content,30px,30px,40px,30px,auto,30px,min-content,50px] grid-cols-1
             border-black border-[2px] bg-[aliceblue] dark:bg-[#100d23] rounded-2xl  `}>
 
             <span className={`grid grid-col-1 grid-rows-1 p-3`} >
@@ -491,13 +525,6 @@ const Index = () => {
                         <span className={`text-[#149adc] text-xs sm:text-sm self-center ml-2 `}>
                           {Number(nativeBalance.data?.formatted).toPrecision(5)}  {token.value}
                         </span>
-                        {sendAmount.value != Number(nativeBalance.data?.formatted).toPrecision(5) &&
-                          <span className={`text-[#20cc9e] text-xs sm:text-sm self-center ml-4 rounded-xl px-2 bg-[#1e1d45] hover:opacity-90  cursor-pointer `}
-                            onClick={() => {
-                              setSendAmount((PreviousAmount) => ({ ...PreviousAmount, value: Number(nativeBalance.data?.formatted).toPrecision(5) }))
-                            }}
-                          > max </span>
-                        }
                       </>
                     }
 
@@ -506,22 +533,112 @@ const Index = () => {
                         <span className={`text-[#149adc] text-text-xs sm:text-sm self-center ml-2 `}>
                           {Number(tokenBalance.data?.formatted).toPrecision(5)} {token.value}
                         </span>
-                        {sendAmount.value != Number(tokenBalance.data?.formatted).toPrecision(5) &&
-                          <span className={`text-[#20cc9e] text-xs sm:text-sm self-center ml-4 rounded-xl px-2 bg-[#1e1d45] hover:opacity-90  cursor-pointer `}
-                            onClick={() => {
-                              setSendAmount((PreviousAmount) => ({ ...PreviousAmount, value: Number(tokenBalance.data?.formatted).toPrecision(5) }))
-                            }}
-                          > max </span>
-                        }
                       </>
-
                     }
-
                   </>
                 }
               </span>
             </span>
+            <span className={`flex m-2 justify-self-end  `} >
+              {!isDisconnected && token &&
+                <>
+                  {token.value == connection.chain?.nativeCurrency.symbol &&
+                    <>
+                      {sendAmount.value != Number(nativeBalance.data?.formatted).toPrecision(5) * 0.25 &&
+                        <span className={`text-[#20cc9e] text-xs sm:text-sm self-center ml-4 rounded-xl px-2 bg-[#1e1d45] hover:opacity-90  cursor-pointer `}
+                          onClick={() => {
+                            setSendAmount((PreviousAmount) => ({
+                              ...PreviousAmount,
+                              value: (Number(nativeBalance.data?.formatted).toPrecision(5) * 0.25),
+                              formattedValue: (Number(nativeBalance.data?.formatted).toPrecision(5) * 0.25).toString() + token.value,
+                              floatValue: Number(nativeBalance.data?.formatted).toPrecision(5) * 0.25
+                            }))
+                          }}
+                        > 25% </span>
+                      }
+                      {sendAmount.value != Number(nativeBalance.data?.formatted).toPrecision(5) * 0.50 &&
+                        <span className={`text-[#20cc9e] text-xs sm:text-sm self-center ml-4 rounded-xl px-2 bg-[#1e1d45] hover:opacity-90  cursor-pointer `}
+                          onClick={() => {
+                            setSendAmount((PreviousAmount) => ({
+                              ...PreviousAmount,
+                              value: (Number(nativeBalance.data?.formatted).toPrecision(5) * 0.50),
+                              formattedValue: (Number(nativeBalance.data?.formatted).toPrecision(5) * 0.50).toString() + token.value,
+                              floatValue: Number(nativeBalance.data?.formatted).toPrecision(5) * 0.50
+                            }))
+                          }}
+                        > 50% </span>
+                      }
 
+                      {sendAmount.value != Number(nativeBalance.data?.formatted).toPrecision(5) * 0.75 &&
+                        <span className={`text-[#20cc9e] text-xs sm:text-sm self-center ml-4 rounded-xl px-2 bg-[#1e1d45] hover:opacity-90  cursor-pointer `}
+                          onClick={() => {
+                            setSendAmount((PreviousAmount) => ({
+                              ...PreviousAmount,
+                              value: (Number(nativeBalance.data?.formatted).toPrecision(5) * 0.75),
+                              formattedValue: (Number(nativeBalance.data?.formatted).toPrecision(5) * 0.75).toString() + token.value,
+                              floatValue: Number(nativeBalance.data?.formatted).toPrecision(5) * 0.75
+                            }))
+                          }}
+                        > 75% </span>
+                      }
+                    </>
+                  }
+
+                  {token.value != connection.chain?.nativeCurrency.symbol &&
+                    <>
+                      {sendAmount.value != Number(tokenBalance.data?.formatted).toPrecision(5) * 0.25 &&
+                        <span className={`text-[#20cc9e] text-xs sm:text-sm self-center ml-4 rounded-xl px-2 bg-[#1e1d45] hover:opacity-90  cursor-pointer `}
+                          onClick={() => {
+                            setSendAmount((PreviousAmount) => ({
+                              ...PreviousAmount,
+                              value: (Number(tokenBalance.data?.formatted).toPrecision(5) * 0.25),
+                              formattedValue: (Number(tokenBalance.data?.formatted).toPrecision(5) * 0.25).toString() + token.value,
+                              floatValue: Number(tokenBalance.data?.formatted).toPrecision(5) * 0.25
+                            }))
+                          }}
+                        > 25% </span>
+                      }
+                      {sendAmount.value != Number(tokenBalance.data?.formatted).toPrecision(5) * 0.50 &&
+                        <span className={`text-[#20cc9e] text-xs sm:text-sm self-center ml-4 rounded-xl px-2 bg-[#1e1d45] hover:opacity-90  cursor-pointer `}
+                          onClick={() => {
+                            setSendAmount((PreviousAmount) => ({
+                              ...PreviousAmount,
+                              value: (Number(tokenBalance.data?.formatted).toPrecision(5) * 0.50),
+                              formattedValue: (Number(tokenBalance.data?.formatted).toPrecision(5) * 0.50).toString() + token.value,
+                              floatValue: Number(tokenBalance.data?.formatted).toPrecision(5) * 0.50
+                            }))
+                          }}
+                        > 50% </span>
+                      }
+                      {sendAmount.value != Number(tokenBalance.data?.formatted).toPrecision(5) * 0.75 &&
+                        <span className={`text-[#20cc9e] text-xs sm:text-sm self-center ml-4 rounded-xl px-2 bg-[#1e1d45] hover:opacity-90  cursor-pointer `}
+                          onClick={() => {
+                            setSendAmount((PreviousAmount) => ({
+                              ...PreviousAmount,
+                              value: (Number(tokenBalance.data?.formatted).toPrecision(5) * 0.75),
+                              formattedValue: (Number(tokenBalance.data?.formatted).toPrecision(5) * 0.75).toString() + token.value,
+                              floatValue: Number(tokenBalance.data?.formatted).toPrecision(5) * 0.75
+                            }))
+                          }}
+                        > 75% </span>
+                      }
+                      {sendAmount.value != Number(tokenBalance.data?.formatted).toPrecision(5) &&
+                        <span className={`text-[#20cc9e] text-xs sm:text-sm self-center ml-4 rounded-xl px-2 bg-[#1e1d45] hover:opacity-90  cursor-pointer `}
+                          onClick={() => {
+                            setSendAmount((PreviousAmount) => ({
+                              ...PreviousAmount,
+                              value: (Number(tokenBalance.data?.formatted).toPrecision(5)),
+                              formattedValue: (Number(tokenBalance.data?.formatted).toPrecision(5)).toString() + token.value,
+                              floatValue: Number(tokenBalance.data?.formatted).toPrecision(5)
+                            }))
+                          }}
+                        > max </span>
+                      }
+                    </>
+                  }
+                </>
+              }
+            </span>
             <NumericFormat
               disabled={isDisconnected || !token}
               className={`focus:outline-none font-extralight text-xs rounded `}
@@ -533,7 +650,8 @@ const Index = () => {
                 setSendAmount(values);
 
                 if (values.floatValue != 0 && values.floatValue) {
-                  // Sets Receiving Amount and Fee and calculates usdValue
+                  // only if VALUE IS NOT 0 AND !undefined
+                  // Sets Receiving Amount and Fee and calculates usdValue 
                   var fee = (Number(values.value) * 0.005).toPrecision(5) + token.value;
                   setFee(fee)
                   var feeUSD = "( $" + Intl.NumberFormat('en-US').format((Number(values.value) * 0.005) * USDValue) + ` USD)`
@@ -586,7 +704,7 @@ const Index = () => {
                     <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center block m-2`}>
                       Fee:
                     </span>
-                    <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2 `}>
+                    <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2 ml-[35px] `}>
                       {sendAmount.floatValue != 0 && sendAmount.floatValue && fee}
                     </span>
                     <span className={`font-extralight text-xs text-[#149adc] self-center  `}>
@@ -654,20 +772,67 @@ const Index = () => {
             {!isDisconnected && addressReciever != '' && token && token.value == connection.chain?.nativeCurrency.symbol && Number(nativeBalance.data?.value) != 0 &&
               sendAmount.floatValue != undefined && sendAmount.floatValue != 0 && Number(sendAmount.value) <= Number(nativeBalance.data.formatted) &&
 
-              <button onClick={() => {
-                createtx();
-              }} className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm `}>
-                Send
+              <button
+                disabled={transactionLoading}
+                onClick={() => {
+                  createtx();
+                }} className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm `}>
+
+                <span className={`inline-flex self-center `}>
+                  {transactionLoading &&
+                    <Image
+                      className={`animate-spin`}
+                      src={'/loading.svg'}
+                      width={20}
+                      height={20}
+                    />
+                  }
+                  <span className={`flex self-center ml-2`} >
+                    Send
+                  </span>
+                </span>
+
               </button>
             }
 
             {!isDisconnected && addressReciever != '' && token && token.value != connection.chain?.nativeCurrency.symbol && Number(tokenBalance.data?.value) != 0 &&
               sendAmount.floatValue != undefined && sendAmount.floatValue != 0 && Number(sendAmount.value) <= Number(tokenBalance.data.formatted) &&
 
-              <button onClick={() => {
-                createtx();
-              }} className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm `}>
-                Send
+              <button disabled={transactionLoading}
+                onClick={() => {
+                  createtx();
+                }} className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm `}>
+                {tokenAllowance ?
+
+                  <span className={`inline-flex self-center `}>
+                    {transactionLoading &&
+                      <Image
+                        className={`animate-spin`}
+                        src={'/loading.svg'}
+                        width={20}
+                        height={20}
+
+                      />
+                    }
+                    <span className={`flex self-center ml-2`} >
+                      Approve {token.value}
+                    </span>
+                  </span>
+                  :
+                  <span className={`inline-flex self-center `}>
+                    {transactionLoading &&
+                      <Image
+                        className={`animate-spin`}
+                        src={'/loading.svg'}
+                        width={20}
+                        height={20}
+                      />
+                    }
+                    <span className={`flex self-center ml-2`} >
+                      Create Payment
+                    </span>
+                  </span>
+                }
               </button>
             }
           </span>
