@@ -1,4 +1,5 @@
 import Head from 'next/head'
+import { useRouter } from 'next/router'
 
 import {
   ConnectButton
@@ -15,6 +16,8 @@ import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Modal from '@mui/material/Modal';
+
 
 
 import { PolygonAddress } from '../polygon';
@@ -22,6 +25,7 @@ import { mumbaiAddress } from '../mumbai';
 import { EthAddress } from '../eth'
 
 import PayFactory from '../artifacts/contracts/PayFactory.sol/PayLock.json'
+
 // Background #131341
 // Component #100d23
 // Button #1e1d45
@@ -31,6 +35,8 @@ import PayFactory from '../artifacts/contracts/PayFactory.sol/PayLock.json'
 //  Light pink #c24bbe
 
 const Index = () => {
+  const router = useRouter()
+
   // Theme Switch
   const [toggle, setToogle] = useState(true);
 
@@ -53,6 +59,8 @@ const Index = () => {
   const [isSSR, setIsSSR] = useState(true);
   // Avatar config at config.current;
   const config = useRef(genConfig());
+  // control views
+  const [screen, setScreen] = useState('SingleTransaction');
 
   const [addressReciever, setAddressReciever] = useState('');
   const [addressError, setAddressError] = useState(false);
@@ -72,8 +80,8 @@ const Index = () => {
   const [transactionLoading, setTransactionLoading] = useState(false);
   const [contractAddress, setContractAddress] = useState('');
 
-  const { data: signer } = useSigner();
 
+  const { data: signer } = useSigner();
   const { data, isError, isLoading, isSuccess, signMessage } = useSignMessage({
     onSuccess: async (sign, msg) => {
       let recovered = await ethers.utils.verifyMessage(msg.message, sign);
@@ -386,18 +394,61 @@ const Index = () => {
               </svg>
             </p>
             <span className={`hidden z-50 group-hover:block p-4  bg-[aliceblue] dark:bg-[#100d23] absolute rounded-xl border-t-2 border-[#149adc] `}>
-              <p className={`cursor-pointer text-[black] text-left dark:text-[#149adc] hover:text-[#149adc]`}>
-                Single Payment
-              </p>
+
+              <span className={`flex m-2 `}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="18" y="15" width="4" height="4" rx="2" transform="rotate(90 18 15)" fill="#149adc" fillOpacity="0.25" stroke="#20cc9e" strokeWidth="1.2" />
+                  <rect x="6" y="8" width="4" height="4" rx="2" transform="rotate(-90 6 8)" fill="#149adc" fillOpacity="0.25" stroke="#20cc9e" strokeWidth="1.2" />
+                  <path d="M8 8V13C8 14.8856 8 15.8284 8.58579 16.4142C9.17157 17 10.1144 17 12 17H14" stroke="#149adc" strokeWidth="1.2" />
+                </svg>
+
+                <p onClick={() => {
+                  setScreen("SingleTransaction")
+                }} className={`ml-3 cursor-pointer text-[black] text-left dark:text-[white] dark:hover:text-[#149adc] hover:text-[#149adc]`}>
+                  Single Transaction
+                </p>
+              </span>
+              <span className={`flex m-2`}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="18" y="9" width="4" height="4" rx="2" transform="rotate(90 18 9)" fill="#149adc" fillOpacity="0.25" stroke="#20cc9e" strokeWidth="1.2" />
+                  <rect x="18" y="17" width="4" height="4" rx="2" transform="rotate(90 18 17)" fill="#149adc" fillOpacity="0.25" stroke="#20cc9e" strokeWidth="1.2" />
+                  <rect x="3" y="7" width="4" height="4" rx="2" transform="rotate(-90 3 7)" fill="#149adc" fillOpacity="0.25" stroke="#20cc9e" strokeWidth="1.2" />
+                  <path d="M5 8V15C5 16.8856 5 17.8284 5.58579 18.4142C6.17157 19 7.11438 19 9 19H14" stroke="#149adc" strokeWidth="1.2" />
+                  <path d="M5 7V7C5 8.88562 5 9.82843 5.58579 10.4142C6.17157 11 7.11438 11 9 11H14" stroke="#149adc" strokeWidth="1.2" />
+                </svg>
+
+                <p className={`ml-3 cursor-pointer text-[black] text-left dark:text-[white] dark:hover:text-[#149adc] hover:text-[#149adc]`}>
+                  Multi-Transaction
+                </p>
+              </span>
+              <span className={`flex mt-4 ml-3 `}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4 8L3.64645 7.64645L3.29289 8L3.64645 8.35355L4 8ZM19.5 10C19.5 10.2761 19.7239 10.5 20 10.5C20.2761 10.5 20.5 10.2761 20.5 10H19.5ZM7.64645 3.64645L3.64645 7.64645L4.35355 8.35355L8.35355 4.35355L7.64645 3.64645ZM3.64645 8.35355L7.64645 12.3536L8.35355 11.6464L4.35355 7.64645L3.64645 8.35355ZM4 8.5H18V7.5H4V8.5ZM18 8.5C18.8284 8.5 19.5 9.17157 19.5 10H20.5C20.5 8.61929 19.3807 7.5 18 7.5V8.5Z"
+                    fill={`#c24bbe`}
+                  />
+                  <path d="M20 16L20.3536 15.6464L20.7071 16L20.3536 16.3536L20 16ZM5 16L5 16.5L5 16.5L5 16ZM2.5 14C2.5 13.7239 2.72386 13.5 3 13.5C3.27614 13.5 3.5 13.7239 3.5 14L2.5 14ZM16.3536 11.6464L20.3536 15.6464L19.6464 16.3536L15.6464 12.3536L16.3536 11.6464ZM20.3536 16.3536L16.3536 20.3536L15.6464 19.6464L19.6464 15.6464L20.3536 16.3536ZM20 16.5L5 16.5L5 15.5L20 15.5L20 16.5ZM5 16.5C3.61929 16.5 2.5 15.3807 2.5 14L3.5 14C3.5 14.8284 4.17157 15.5 5 15.5L5 16.5Z"
+                    fill="#c24bbe" />
+                </svg>
+                <p onClick={() => {
+                  setScreen("ViewTransactions")
+                }} className={`ml-2 cursor-pointer text-[black] text-left dark:text-[white] dark:hover:text-[#c24bbe] hover:text-[#c24bbe]`}>
+                  View Transactions
+                </p>
+              </span>
             </span>
           </span>
 
           <span className="mr-auto my-auto ml-4 text-sm ">
-            <p className='cursor-pointer font-extralight hover:text-[#149adc] text-[white] text-sm' > Receive
+            <p onClick={() => {
+              router.push('/code')
+            }}
+              className='cursor-pointer font-extralight hover:text-[#149adc] text-[white] text-sm' >
+              Receive
             </p>
           </span>
 
         </span>
+
         <span className={` flex self-center justify-self-end`}>
           {/* Connect Button */}
           <span className={`self-center`}>
@@ -441,343 +492,453 @@ const Index = () => {
         </span>
       </span>
 
-      {!isSSR &&
-        <React.Fragment>
-          <span className={` self-start justify-self-auto sm:justify-self-center 
-          col-start-1 col-end-8 row-start-3 row-end-4 sm:mx-4 p-4 mx-4
+      {!isSSR && screen == "SingleTransaction" &&
+        <span className={`fade self-start justify-self-auto sm:justify-self-center 
+           col-start-1 col-end-8 row-start-3 row-end-4 sm:mx-4 p-4 mx-4
            grid grid-rows-[40px,min-content,30px,30px,40px,30px,auto,30px,min-content,50px] grid-cols-1
             border-black border-[2px] bg-[aliceblue] dark:bg-[#100d23] rounded-2xl  `}>
 
-            <span className={`grid grid-col-1 grid-rows-1 p-3`} >
+          <span className={`grid grid-col-1 grid-rows-1 p-3`} >
 
-              <span className={`text-[#149adc] font-bold text-base justify-self-start align-super`}>Send  </span>
-            </span>
+            <span className={`text-[#149adc] font-bold text-base justify-self-start align-super`}>Send  </span>
+          </span>
 
-            <span className={`flex ml-2 `}>
-              {addressError &&
+          <span className={`flex ml-2 `}>
+            {addressError &&
+              <>
+                <Image
+                  width={20}
+                  height={20}
+                  className={`inline `}
+                  alt={'error'}
+                  src={'/alert_diamond.svg'}
+                />
+                <span className={`text-[#c24bbe] text-sm self-center ml-2 font-semibold`}>Please insert a valid address.</span>
+              </>
+            }
+          </span>
+
+          <input
+            name="teext"
+            type="text"
+            disabled={isDisconnected}
+            className={`self-end py-2 focus:outline-none font-extralight text-xs rounded`}
+            onChange={(change) => {
+              const isAddress = ethers.utils.isAddress(change.target.value);
+              if (!isAddress) {
+                setAddressError(true);
+                setAddressReciever('');
+
+              }
+              else {
+                setAddressError(false);
+                setAddressReciever(change.target.value);
+              }
+
+            }}
+          />
+          <span className={`text-[#20cc9e] text-sm self-center `}>Receiver Address</span>
+
+
+          <Select
+            options={tokenOptions}
+            value={token}
+            isDisabled={isDisconnected}
+            className={`self-center ${isDisconnected && `opacity-50`}`}
+            onChange={(change) => {
+              console.log(change)
+              setToken(change);
+            }}
+
+            formatOptionLabel={tokenOption => (
+              <div className={`flex self-center z-50`}>
+                <Image
+                  className={``}
+                  alt={`${tokenOption.value} token`}
+                  src={`/${tokenOption.svg}.svg`}
+                  width={20}
+                  height={20}
+                />
+                <span className={` font-extralight text-sm self-center ml-2 `}>{tokenOption.value}</span>
+              </div>
+            )}
+
+          />
+          <span className={`flex`} >
+            <span className={`text-[#20cc9e] text-xs sm:text-sm self-center `}>Select token  </span>
+
+            <span className={`flex ml-4  `}>
+              {!isDisconnected && token &&
                 <>
-                  <Image
-                    width={20}
-                    height={20}
-                    className={`inline `}
-                    alt={'error'}
-                    src={'/alert_diamond.svg'}
-                  />
-                  <span className={`text-[#c24bbe] text-sm self-center ml-2 font-semibold`}>Please insert a valid address.</span>
+                  <span className={`text-[#20cc9e] text-xs sm:text-sm self-center `}>Balance:  </span>
+                  {token && token?.value == connection.chain?.nativeCurrency.symbol &&
+                    <>
+                      <span className={`text-[#149adc] text-xs sm:text-sm self-center ml-2 `}>
+                        {Number(nativeBalance.data?.formatted).toPrecision(5)}  {token.value}
+                      </span>
+                    </>
+                  }
+
+                  {token && token?.value != connection.chain?.nativeCurrency.symbol &&
+                    <>
+                      <span className={`text-[#149adc] text-text-xs sm:text-sm self-center ml-2 `}>
+                        {Number(tokenBalance.data?.formatted).toPrecision(5)} {token.value}
+                      </span>
+                    </>
+                  }
                 </>
               }
             </span>
-
-            <input
-              name="teext"
-              type="text"
-              disabled={isDisconnected}
-              className={`self-end py-2 focus:outline-none font-extralight text-xs rounded`}
-              onChange={(change) => {
-                const isAddress = ethers.utils.isAddress(change.target.value);
-                if (!isAddress) {
-                  setAddressError(true);
-                  setAddressReciever('');
-
-                }
-                else {
-                  setAddressError(false);
-                  setAddressReciever(change.target.value);
-                }
-
-              }}
-            />
-            <span className={`text-[#20cc9e] text-sm self-center `}>Receiver Address  </span>
-
-
-            <Select
-              options={tokenOptions}
-              value={token}
-              isDisabled={isDisconnected}
-              className={`self-center ${isDisconnected && `opacity-50`}  `}
-              onChange={(change) => {
-                setToken(change);
-              }}
-
-              formatOptionLabel={tokenOption => (
-                <div className={`flex self-center `}>
-                  <Image
-                    className={``}
-                    alt={`${tokenOption.value} token`}
-                    src={`/${tokenOption.svg}.svg`}
-                    width={20}
-                    height={20}
-                  />
-                  <span className={` font-extralight text-sm self-center ml-2 `}>{tokenOption.value}</span>
-                </div>
-              )}
-
-            />
-            <span className={`flex`} >
-              <span className={`text-[#20cc9e] text-xs sm:text-sm self-center `}>Select token  </span>
-
-              <span className={`flex ml-4  `}>
-                {!isDisconnected && token &&
+          </span>
+          <span className={`flex m-2 justify-self-end  `} >
+            {!isDisconnected && token &&
+              <>
+                {token.value == connection.chain?.nativeCurrency.symbol &&
                   <>
-                    <span className={`text-[#20cc9e] text-xs sm:text-sm self-center `}>Balance:  </span>
-                    {token && token?.value == connection.chain?.nativeCurrency.symbol &&
-                      <>
-                        <span className={`text-[#149adc] text-xs sm:text-sm self-center ml-2 `}>
-                          {Number(nativeBalance.data?.formatted).toPrecision(5)}  {token.value}
-                        </span>
-                      </>
+                    {sendAmount.value != Number(nativeBalance.data?.formatted).toPrecision(5) * 0.25 &&
+                      <span className={`text-[#20cc9e] text-xs sm:text-sm self-center ml-4 rounded-xl px-2 bg-[#1e1d45] hover:opacity-90  cursor-pointer `}
+                        onClick={() => {
+                          setSendAmount((PreviousAmount) => ({
+                            ...PreviousAmount,
+                            value: (Number(nativeBalance.data?.formatted).toPrecision(5) * 0.25),
+                            formattedValue: (Number(nativeBalance.data?.formatted).toPrecision(5) * 0.25).toString() + token.value,
+                            floatValue: Number(nativeBalance.data?.formatted).toPrecision(5) * 0.25
+                          }))
+
+                          var fee = ((Number(nativeBalance.data?.formatted) * 0.25) * 0.005).toPrecision(5) + token.value;
+                          setFee(fee)
+                          var feeUSD = "( $" + Intl.NumberFormat('en-US').format(((Number(nativeBalance.data?.formatted) * 0.25) * 0.005) * USDValue) + ` USD)`
+                          setFeeUSD(feeUSD)
+
+                          var receivingAmount = ((Number(nativeBalance.data?.formatted) * 0.25) - ((Number(nativeBalance.data?.formatted) * 0.25) * 0.005)).toPrecision(5) + token.value
+                          setReceivingAmount(receivingAmount);
+                          var receivingUSD = '( $' + Intl.NumberFormat('en-US').format(((Number(nativeBalance.data?.formatted) * 0.25) - (Number(nativeBalance.data?.formatted) * 0.25) * 0.005) * USDValue) + ' USD)'
+                          setReceivingAmountUSD(receivingUSD)
+                        }}
+                      > 25% </span>
+                    }
+                    {sendAmount.value != Number(nativeBalance.data?.formatted).toPrecision(5) * 0.50 &&
+                      <span className={`text-[#20cc9e] text-xs sm:text-sm self-center ml-4 rounded-xl px-2 bg-[#1e1d45] hover:opacity-90  cursor-pointer `}
+                        onClick={() => {
+                          setSendAmount((PreviousAmount) => ({
+                            ...PreviousAmount,
+                            value: (Number(nativeBalance.data?.formatted).toPrecision(5) * 0.50),
+                            formattedValue: (Number(nativeBalance.data?.formatted).toPrecision(5) * 0.50).toString() + token.value,
+                            floatValue: Number(nativeBalance.data?.formatted).toPrecision(5) * 0.50
+                          }))
+
+                          var fee = ((Number(nativeBalance.data?.formatted) * 0.50) * 0.005).toPrecision(5) + token.value;
+                          setFee(fee)
+                          var feeUSD = "( $" + Intl.NumberFormat('en-US').format(((Number(nativeBalance.data?.formatted) * 0.50) * 0.005) * USDValue) + ` USD)`
+                          setFeeUSD(feeUSD)
+
+                          var receivingAmount = ((Number(nativeBalance.data?.formatted) * 0.50) - ((Number(nativeBalance.data?.formatted) * 0.50) * 0.005)).toPrecision(5) + token.value
+                          setReceivingAmount(receivingAmount);
+                          var receivingUSD = '( $' + Intl.NumberFormat('en-US').format(((Number(nativeBalance.data?.formatted) * 0.50) - (Number(nativeBalance.data?.formatted) * 0.50) * 0.005) * USDValue) + ' USD)'
+                          setReceivingAmountUSD(receivingUSD)
+                        }}
+                      > 50% </span>
                     }
 
-                    {token && token?.value != connection.chain?.nativeCurrency.symbol &&
-                      <>
-                        <span className={`text-[#149adc] text-text-xs sm:text-sm self-center ml-2 `}>
-                          {Number(tokenBalance.data?.formatted).toPrecision(5)} {token.value}
-                        </span>
-                      </>
+                    {sendAmount.value != Number(nativeBalance.data?.formatted).toPrecision(5) * 0.75 &&
+                      <span className={`text-[#20cc9e] text-xs sm:text-sm self-center ml-4 rounded-xl px-2 bg-[#1e1d45] hover:opacity-90  cursor-pointer `}
+                        onClick={() => {
+                          setSendAmount((PreviousAmount) => ({
+                            ...PreviousAmount,
+                            value: (Number(nativeBalance.data?.formatted).toPrecision(5) * 0.75),
+                            formattedValue: (Number(nativeBalance.data?.formatted).toPrecision(5) * 0.75).toString() + token.value,
+                            floatValue: Number(nativeBalance.data?.formatted).toPrecision(5) * 0.75
+                          }))
+                          var fee = ((Number(nativeBalance.data?.formatted) * 0.75) * 0.005).toPrecision(5) + token.value;
+                          setFee(fee)
+                          var feeUSD = "( $" + Intl.NumberFormat('en-US').format(((Number(nativeBalance.data?.formatted) * 0.75) * 0.005) * USDValue) + ` USD)`
+                          setFeeUSD(feeUSD)
+
+                          var receivingAmount = ((Number(nativeBalance.data?.formatted) * 0.75) - ((Number(nativeBalance.data?.formatted) * 0.75) * 0.005)).toPrecision(5) + token.value
+                          setReceivingAmount(receivingAmount);
+                          var receivingUSD = '( $' + Intl.NumberFormat('en-US').format(((Number(nativeBalance.data?.formatted) * 0.75) - (Number(nativeBalance.data?.formatted) * 0.75) * 0.005) * USDValue) + ' USD)'
+                          setReceivingAmountUSD(receivingUSD)
+
+                        }}
+                      > 75% </span>
                     }
                   </>
                 }
-              </span>
-            </span>
-            <span className={`flex m-2 justify-self-end  `} >
-              {!isDisconnected && token &&
-                <>
-                  {token.value == connection.chain?.nativeCurrency.symbol &&
-                    <>
-                      {sendAmount.value != Number(nativeBalance.data?.formatted).toPrecision(5) * 0.25 &&
-                        <span className={`text-[#20cc9e] text-xs sm:text-sm self-center ml-4 rounded-xl px-2 bg-[#1e1d45] hover:opacity-90  cursor-pointer `}
-                          onClick={() => {
-                            setSendAmount((PreviousAmount) => ({
-                              ...PreviousAmount,
-                              value: (Number(nativeBalance.data?.formatted).toPrecision(5) * 0.25),
-                              formattedValue: (Number(nativeBalance.data?.formatted).toPrecision(5) * 0.25).toString() + token.value,
-                              floatValue: Number(nativeBalance.data?.formatted).toPrecision(5) * 0.25
-                            }))
-                          }}
-                        > 25% </span>
-                      }
-                      {sendAmount.value != Number(nativeBalance.data?.formatted).toPrecision(5) * 0.50 &&
-                        <span className={`text-[#20cc9e] text-xs sm:text-sm self-center ml-4 rounded-xl px-2 bg-[#1e1d45] hover:opacity-90  cursor-pointer `}
-                          onClick={() => {
-                            setSendAmount((PreviousAmount) => ({
-                              ...PreviousAmount,
-                              value: (Number(nativeBalance.data?.formatted).toPrecision(5) * 0.50),
-                              formattedValue: (Number(nativeBalance.data?.formatted).toPrecision(5) * 0.50).toString() + token.value,
-                              floatValue: Number(nativeBalance.data?.formatted).toPrecision(5) * 0.50
-                            }))
-                          }}
-                        > 50% </span>
-                      }
 
-                      {sendAmount.value != Number(nativeBalance.data?.formatted).toPrecision(5) * 0.75 &&
-                        <span className={`text-[#20cc9e] text-xs sm:text-sm self-center ml-4 rounded-xl px-2 bg-[#1e1d45] hover:opacity-90  cursor-pointer `}
-                          onClick={() => {
-                            setSendAmount((PreviousAmount) => ({
-                              ...PreviousAmount,
-                              value: (Number(nativeBalance.data?.formatted).toPrecision(5) * 0.75),
-                              formattedValue: (Number(nativeBalance.data?.formatted).toPrecision(5) * 0.75).toString() + token.value,
-                              floatValue: Number(nativeBalance.data?.formatted).toPrecision(5) * 0.75
-                            }))
-                          }}
-                        > 75% </span>
-                      }
-                    </>
-                  }
+                {token.value != connection.chain?.nativeCurrency.symbol &&
+                  <>
+                    {sendAmount.value != Number(tokenBalance.data?.formatted).toPrecision(5) * 0.25 &&
+                      <span className={`text-[#20cc9e] text-xs sm:text-sm self-center ml-4 rounded-xl px-2 bg-[#1e1d45] hover:opacity-90  cursor-pointer `}
+                        onClick={() => {
+                          setSendAmount((PreviousAmount) => ({
+                            ...PreviousAmount,
+                            value: (Number(tokenBalance.data?.formatted).toPrecision(5) * 0.25),
+                            formattedValue: (Number(tokenBalance.data?.formatted).toPrecision(5) * 0.25).toString() + token.value,
+                            floatValue: Number(tokenBalance.data?.formatted).toPrecision(5) * 0.25
+                          }))
 
-                  {token.value != connection.chain?.nativeCurrency.symbol &&
-                    <>
-                      {sendAmount.value != Number(tokenBalance.data?.formatted).toPrecision(5) * 0.25 &&
-                        <span className={`text-[#20cc9e] text-xs sm:text-sm self-center ml-4 rounded-xl px-2 bg-[#1e1d45] hover:opacity-90  cursor-pointer `}
-                          onClick={() => {
-                            setSendAmount((PreviousAmount) => ({
-                              ...PreviousAmount,
-                              value: (Number(tokenBalance.data?.formatted).toPrecision(5) * 0.25),
-                              formattedValue: (Number(tokenBalance.data?.formatted).toPrecision(5) * 0.25).toString() + token.value,
-                              floatValue: Number(tokenBalance.data?.formatted).toPrecision(5) * 0.25
-                            }))
-                          }}
-                        > 25% </span>
-                      }
-                      {sendAmount.value != Number(tokenBalance.data?.formatted).toPrecision(5) * 0.50 &&
-                        <span className={`text-[#20cc9e] text-xs sm:text-sm self-center ml-4 rounded-xl px-2 bg-[#1e1d45] hover:opacity-90  cursor-pointer `}
-                          onClick={() => {
-                            setSendAmount((PreviousAmount) => ({
-                              ...PreviousAmount,
-                              value: (Number(tokenBalance.data?.formatted).toPrecision(5) * 0.50),
-                              formattedValue: (Number(tokenBalance.data?.formatted).toPrecision(5) * 0.50).toString() + token.value,
-                              floatValue: Number(tokenBalance.data?.formatted).toPrecision(5) * 0.50
-                            }))
-                          }}
-                        > 50% </span>
-                      }
-                      {sendAmount.value != Number(tokenBalance.data?.formatted).toPrecision(5) * 0.75 &&
-                        <span className={`text-[#20cc9e] text-xs sm:text-sm self-center ml-4 rounded-xl px-2 bg-[#1e1d45] hover:opacity-90  cursor-pointer `}
-                          onClick={() => {
-                            setSendAmount((PreviousAmount) => ({
-                              ...PreviousAmount,
-                              value: (Number(tokenBalance.data?.formatted).toPrecision(5) * 0.75),
-                              formattedValue: (Number(tokenBalance.data?.formatted).toPrecision(5) * 0.75).toString() + token.value,
-                              floatValue: Number(tokenBalance.data?.formatted).toPrecision(5) * 0.75
-                            }))
-                          }}
-                        > 75% </span>
-                      }
-                      {sendAmount.value != Number(tokenBalance.data?.formatted).toPrecision(5) &&
-                        <span className={`text-[#20cc9e] text-xs sm:text-sm self-center ml-4 rounded-xl px-2 bg-[#1e1d45] hover:opacity-90  cursor-pointer `}
-                          onClick={() => {
-                            setSendAmount((PreviousAmount) => ({
-                              ...PreviousAmount,
-                              value: (Number(tokenBalance.data?.formatted).toPrecision(5)),
-                              formattedValue: (Number(tokenBalance.data?.formatted).toPrecision(5)).toString() + token.value,
-                              floatValue: Number(tokenBalance.data?.formatted).toPrecision(5)
-                            }))
-                          }}
-                        > max </span>
-                      }
-                    </>
-                  }
-                </>
-              }
-            </span>
-            <NumericFormat
-              disabled={isDisconnected || !token}
-              className={`focus:outline-none font-extralight text-xs rounded `}
-              allowNegative={false}
-              value={sendAmount.value}
-              thousandSeparator
-              suffix={token?.value}
-              onValueChange={(values) => {
-                setSendAmount(values);
+                          var fee = ((Number(tokenBalance.data?.formatted) * 0.25) * 0.005).toPrecision(5) + token.value;
+                          setFee(fee)
+                          var feeUSD = "( $" + Intl.NumberFormat('en-US').format(((Number(tokenBalance.data?.formatted) * 0.25) * 0.005) * USDValue) + ` USD)`
+                          setFeeUSD(feeUSD)
 
-                if (values.floatValue != 0 && values.floatValue) {
-                  // only if VALUE IS NOT 0 AND !undefined
-                  // Sets Receiving Amount and Fee and calculates usdValue 
-                  var fee = (Number(values.value) * 0.005).toPrecision(5) + token.value;
-                  setFee(fee)
-                  var feeUSD = "( $" + Intl.NumberFormat('en-US').format((Number(values.value) * 0.005) * USDValue) + ` USD)`
-                  setFeeUSD(feeUSD)
+                          var receivingAmount = ((Number(tokenBalance.data?.formatted) * 0.25) - ((Number(tokenBalance.data?.formatted) * 0.25) * 0.005)).toPrecision(5) + token.value
+                          setReceivingAmount(receivingAmount);
+                          var receivingUSD = '( $' + Intl.NumberFormat('en-US').format(((Number(tokenBalance.data?.formatted) * 0.25) - (Number(tokenBalance.data?.formatted) * 0.25) * 0.005) * USDValue) + ' USD)'
+                          setReceivingAmountUSD(receivingUSD)
+                        }}
+                      > 25% </span>
+                    }
+                    {sendAmount.value != Number(tokenBalance.data?.formatted).toPrecision(5) * 0.50 &&
+                      <span className={`text-[#20cc9e] text-xs sm:text-sm self-center ml-4 rounded-xl px-2 bg-[#1e1d45] hover:opacity-90  cursor-pointer `}
+                        onClick={() => {
+                          setSendAmount((PreviousAmount) => ({
+                            ...PreviousAmount,
+                            value: (Number(tokenBalance.data?.formatted).toPrecision(5) * 0.50),
+                            formattedValue: (Number(tokenBalance.data?.formatted).toPrecision(5) * 0.50).toString() + token.value,
+                            floatValue: Number(tokenBalance.data?.formatted).toPrecision(5) * 0.50
+                          }))
 
-                  var receivingAmount = (Number(values.value) - (Number(values.value) * 0.005)).toPrecision(5) + token.value
-                  setReceivingAmount(receivingAmount);
-                  var receivingUSD = '( $' + Intl.NumberFormat('en-US').format((Number(values.value) - Number(values.value) * 0.005) * USDValue) + ' USD)'
-                  setReceivingAmountUSD(receivingUSD)
+                          var fee = ((Number(tokenBalance.data?.formatted) * 0.50) * 0.005).toPrecision(5) + token.value;
+                          setFee(fee)
+                          var feeUSD = "( $" + Intl.NumberFormat('en-US').format(((Number(tokenBalance.data?.formatted) * 0.50) * 0.005) * USDValue) + ` USD)`
+                          setFeeUSD(feeUSD)
+
+                          var receivingAmount = ((Number(tokenBalance.data?.formatted) * 0.50) - ((Number(tokenBalance.data?.formatted) * 0.50) * 0.005)).toPrecision(5) + token.value
+                          setReceivingAmount(receivingAmount);
+                          var receivingUSD = '( $' + Intl.NumberFormat('en-US').format(((Number(tokenBalance.data?.formatted) * 0.50) - (Number(tokenBalance.data?.formatted) * 0.50) * 0.005) * USDValue) + ' USD)'
+                          setReceivingAmountUSD(receivingUSD)
+                        }}
+                      > 50% </span>
+                    }
+                    {sendAmount.value != Number(tokenBalance.data?.formatted).toPrecision(5) * 0.75 &&
+                      <span className={`text-[#20cc9e] text-xs sm:text-sm self-center ml-4 rounded-xl px-2 bg-[#1e1d45] hover:opacity-90  cursor-pointer `}
+                        onClick={() => {
+                          setSendAmount((PreviousAmount) => ({
+                            ...PreviousAmount,
+                            value: (Number(tokenBalance.data?.formatted).toPrecision(5) * 0.75),
+                            formattedValue: (Number(tokenBalance.data?.formatted).toPrecision(5) * 0.75).toString() + token.value,
+                            floatValue: Number(tokenBalance.data?.formatted).toPrecision(5) * 0.75
+                          }))
+
+                          var fee = ((Number(tokenBalance.data?.formatted) * 0.75) * 0.005).toPrecision(5) + token.value;
+                          setFee(fee)
+                          var feeUSD = "( $" + Intl.NumberFormat('en-US').format(((Number(tokenBalance.data?.formatted) * 0.75) * 0.005) * USDValue) + ` USD)`
+                          setFeeUSD(feeUSD)
+
+                          var receivingAmount = ((Number(tokenBalance.data?.formatted) * 0.75) - ((Number(tokenBalance.data?.formatted) * 0.75) * 0.005)).toPrecision(5) + token.value
+                          setReceivingAmount(receivingAmount);
+                          var receivingUSD = '( $' + Intl.NumberFormat('en-US').format(((Number(tokenBalance.data?.formatted) * 0.75) - (Number(tokenBalance.data?.formatted) * 0.75) * 0.005) * USDValue) + ' USD)'
+                          setReceivingAmountUSD(receivingUSD)
+                        }}
+                      > 75% </span>
+                    }
+                    {sendAmount.value != Number(tokenBalance.data?.formatted).toPrecision(5) &&
+                      <span className={`text-[#20cc9e] text-xs sm:text-sm self-center ml-4 rounded-xl px-2 bg-[#1e1d45] hover:opacity-90  cursor-pointer `}
+                        onClick={() => {
+                          // Sets sendAmount & fee,feeUSD, receivingAmount,receivingAmountUSD
+                          setSendAmount((PreviousAmount) => ({
+                            ...PreviousAmount,
+                            value: (Number(tokenBalance.data?.formatted).toPrecision(5)),
+                            formattedValue: (Number(tokenBalance.data?.formatted).toPrecision(5)).toString() + token.value,
+                            floatValue: Number(tokenBalance.data?.formatted).toPrecision(5)
+                          }))
+
+                          var fee = (Number(tokenBalance.data?.formatted) * 0.005).toPrecision(5) + token.value;
+                          setFee(fee)
+                          var feeUSD = "( $" + Intl.NumberFormat('en-US').format((Number(tokenBalance.data?.formatted) * 0.005) * USDValue) + ` USD)`
+                          setFeeUSD(feeUSD)
+
+                          var receivingAmount = (Number(tokenBalance.data?.formatted) - (Number(tokenBalance.data?.formatted) * 0.005)).toPrecision(5) + token.value
+                          setReceivingAmount(receivingAmount);
+                          var receivingUSD = '( $' + Intl.NumberFormat('en-US').format((Number(tokenBalance.data?.formatted) - Number(tokenBalance.data?.formatted) * 0.005) * USDValue) + ' USD)'
+                          setReceivingAmountUSD(receivingUSD)
+                        }}
+                      > max </span>
+                    }
+                  </>
                 }
+              </>
+            }
+          </span>
+          <NumericFormat
+            disabled={isDisconnected || !token}
+            className={`focus:outline-none font-extralight text-xs rounded `}
+            allowNegative={false}
+            value={sendAmount.value}
+            thousandSeparator
+            suffix={token?.value}
+            onValueChange={(values) => {
+              setSendAmount(values);
 
-              }}
-            />
+              if (values.floatValue != 0 && values.floatValue) {
+                // only if VALUE IS NOT 0 AND !undefined
+                // Sets Receiving Amount and Fee and calculates usdValue 
+                var fee = (Number(values.value) * 0.005).toPrecision(5) + token.value;
+                setFee(fee)
+                var feeUSD = "( $" + Intl.NumberFormat('en-US').format((Number(values.value) * 0.005) * USDValue) + ` USD)`
+                setFeeUSD(feeUSD)
 
-            <Accordion
-              className={`dark:bg-[#100d23]`}
-              sx={{ borderRadius: "10px", marginTop: "15px" }}
-              disableGutters={true}
-              disabled={isDisconnected || !addressReciever || !token}
+                var receivingAmount = (Number(values.value) - (Number(values.value) * 0.005)).toPrecision(5) + token.value
+                setReceivingAmount(receivingAmount);
+                var receivingUSD = '( $' + Intl.NumberFormat('en-US').format((Number(values.value) - Number(values.value) * 0.005) * USDValue) + ' USD)'
+                setReceivingAmountUSD(receivingUSD)
+              }
+
+            }}
+          />
+
+          <Accordion
+            className={`dark:bg-[#100d23]`}
+            sx={{ borderRadius: "10px", marginTop: "15px" }}
+            disableGutters={true}
+            disabled={isDisconnected || !addressReciever || !token}
+          >
+            <AccordionSummary
+              className={`border-black border-[2px]`}
+              expandIcon={<ExpandMoreIcon className={`dark:text-[#20cc9e]`} />}
+              aria-controls="panel1a-content"
+              id="panel1a-header"
             >
-              <AccordionSummary
-                className={`border-black border-[2px]`}
-                expandIcon={<ExpandMoreIcon className={`dark:text-[#20cc9e]`} />}
-                aria-controls="panel1a-content"
-                id="panel1a-header"
-              >
-                <span className={`font-bold text-xs text-[#20cc9e]`}
-                >Payment Details</span>
-              </AccordionSummary>
-              <AccordionDetails className={`dark:bg-[#1e1d45]`}>
-                <div className={`  rounded `}>
-                  <span className={`flex  `}>
-                    <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center m-2`}
-                    >Sending:
-                    </span>
-                    <span className={`flex border-[1px] cursor-pointer border-[#372963] rounded  `}>
+              <span className={`font-bold text-xs text-[#20cc9e]`}
+              >Payment Details</span>
+            </AccordionSummary>
+            <AccordionDetails className={`dark:bg-[#1e1d45]`}>
+              <div className={`  rounded `}>
+                <span className={`flex  `}>
+                  <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center m-2`}
+                  >Sending:
+                  </span>
+                  <span className={`flex border-[1px] cursor-pointer border-[#372963] rounded  `}>
 
-                      <Avatar className="w-8 h-8 inline self-center ml-2" {...config.current} />
-                      <input
-                        name="name"
-                        type="text"
-                        className={`ml-2 self-center justify-self-start text-[#c24bbe] `}
-                        value={addressReciever.substring(0, 4) + "..." + addressReciever.substring(38, 42)}
-                        disabled={true}
-                      />
-                    </span>
+                    <Avatar className="w-8 h-8 inline self-center ml-2" {...config.current} />
+                    <input
+                      name="name"
+                      type="text"
+                      className={`ml-2 self-center justify-self-start text-[#c24bbe] `}
+                      value={addressReciever.substring(0, 4) + "..." + addressReciever.substring(38, 42)}
+                      disabled={true}
+                    />
+                  </span>
+                </span>
+
+                <span className={`flex`}>
+                  <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center block m-2`}>
+                    Fee:
+                  </span>
+                  <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2 ml-[35px] `}>
+                    {sendAmount.floatValue != 0 && sendAmount.floatValue && fee}
+                  </span>
+                  <span className={`font-extralight text-xs text-[#149adc] self-center  `}>
+                    {sendAmount.floatValue != 0 && sendAmount.floatValue && feeUSD}
                   </span>
 
-                  <span className={`flex`}>
-                    <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center block m-2`}>
-                      Fee:
-                    </span>
-                    <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2 ml-[35px] `}>
-                      {sendAmount.floatValue != 0 && sendAmount.floatValue && fee}
-                    </span>
-                    <span className={`font-extralight text-xs text-[#149adc] self-center  `}>
-                      {sendAmount.floatValue != 0 && sendAmount.floatValue && feeUSD}
-                    </span>
 
+                </span>
+                <span className={`flex`}>
+                  <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center block m-2`}>
+                    Receiving:
+                  </span>
+                  <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2 `}>
+                    {sendAmount.floatValue != 0 && sendAmount.floatValue && receivingAmount}
+                  </span>
+                  <span className={`font-extralight text-xs text-[#149adc] self-center block `}>
+                    {sendAmount.floatValue != 0 && sendAmount.floatValue && receivingAmountUSD}
+                  </span>
+                </span>
+                <span className={`flex`}>
+                  <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center block m-2`}>
+                    Network:
+                  </span>
+                  <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2`}>
+                    {connection.chain?.name}
+                  </span>
+                </span>
+                <span className={`flex`}>
+                  <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center block m-2`}>
+                    Method:
+                  </span>
+                  <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2`}>
+                    Single Payment (Withdrawable)
+                  </span>
+                </span>
+              </div>
+            </AccordionDetails>
+          </Accordion>
 
-                  </span>
-                  <span className={`flex`}>
-                    <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center block m-2`}>
-                      Receiving:
-                    </span>
-                    <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2 `}>
-                      {sendAmount.floatValue != 0 && sendAmount.floatValue && receivingAmount}
-                    </span>
-                    <span className={`font-extralight text-xs text-[#149adc] self-center block `}>
-                      {sendAmount.floatValue != 0 && sendAmount.floatValue && receivingAmountUSD}
-                    </span>
-                  </span>
-                  <span className={`flex`}>
-                    <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center block m-2`}>
-                      Network:
-                    </span>
-                    <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2`}>
-                      {connection.chain?.name}
-                    </span>
-                  </span>
-                  <span className={`flex`}>
-                    <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center block m-2`}>
-                      Method:
-                    </span>
-                    <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2`}>
-                      Single Payment (Withdrawable)
-                    </span>
-                  </span>
-                </div>
-              </AccordionDetails>
-            </Accordion>
+          {isDisconnected &&
+            <span className={`justify-self-center self-center`}>
+              <ConnectButton />
+            </span>
+          }
+          {!isDisconnected && addressReciever == '' &&
+            <button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled >Enter address</button>
+          }
+          {!isDisconnected && addressReciever != '' && !token &&
+            <button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled >Select token</button>
+          }
+          {!isDisconnected && addressReciever != '' && token && sendAmount.floatValue == undefined &&
+            < button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled >Enter Amount</button>
+          }
+          {!isDisconnected && addressReciever != '' && token && sendAmount.floatValue == 0 &&
+            < button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled >Enter Amount</button>
+          }
 
-            {isDisconnected &&
-              <span className={`justify-self-center self-center`}>
-                <ConnectButton />
+          {!isDisconnected && addressReciever != '' && token && token.value != connection.chain?.nativeCurrency.symbol && Number(sendAmount.value) > Number(tokenBalance.data?.formatted) &&
+            < button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled >{`Insufficient ${token.value}`} </button>
+          }
+          {!isDisconnected && addressReciever != '' && token && token.value == connection.chain?.nativeCurrency.symbol && Number(sendAmount.value) > Number(nativeBalance.data.formatted) &&
+            < button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled > {`Insufficient ${token.value}`}</button>
+          }
+
+          {!isDisconnected && addressReciever != '' && token && token.value == connection.chain?.nativeCurrency.symbol && Number(nativeBalance.data?.value) != 0 &&
+            sendAmount.floatValue != undefined && sendAmount.floatValue != 0 && Number(sendAmount.value) <= Number(nativeBalance.data.formatted) &&
+            <button
+              disabled={transactionLoading}
+              onClick={() => {
+                createtx();
+              }} className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm `}>
+
+              <span className={`inline-flex self-center `}>
+                {transactionLoading &&
+                  <Image
+                    className={`animate-spin`}
+                    src={'/loading.svg'}
+                    width={20}
+                    height={20}
+                  />
+                }
+                <span className={`flex self-center ml-2`} >
+                  Send
+                </span>
               </span>
-            }
-            {!isDisconnected && addressReciever == '' &&
-              <button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled >Enter address</button>
-            }
-            {!isDisconnected && addressReciever != '' && !token &&
-              <button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled >Select token</button>
-            }
-            {!isDisconnected && addressReciever != '' && token && sendAmount.floatValue == undefined &&
-              < button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled >Enter Amount</button>
-            }
-            {!isDisconnected && addressReciever != '' && token && sendAmount.floatValue == 0 &&
-              < button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled >Enter Amount</button>
-            }
 
-            {!isDisconnected && addressReciever != '' && token && token.value != connection.chain?.nativeCurrency.symbol && Number(sendAmount.value) > Number(tokenBalance.data?.formatted) &&
-              < button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled >{`Insufficient ${token.value}`} </button>
-            }
-            {!isDisconnected && addressReciever != '' && token && token.value == connection.chain?.nativeCurrency.symbol && Number(sendAmount.value) > Number(nativeBalance.data.formatted) &&
-              < button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled > {`Insufficient ${token.value}`}</button>
-            }
+            </button>
+          }
 
-            {!isDisconnected && addressReciever != '' && token && token.value == connection.chain?.nativeCurrency.symbol && Number(nativeBalance.data?.value) != 0 &&
-              sendAmount.floatValue != undefined && sendAmount.floatValue != 0 && Number(sendAmount.value) <= Number(nativeBalance.data.formatted) &&
+          {!isDisconnected && addressReciever != '' && token && token.value != connection.chain?.nativeCurrency.symbol && Number(tokenBalance.data?.value) != 0 &&
+            sendAmount.floatValue != undefined && sendAmount.floatValue != 0 && Number(sendAmount.value) <= Number(tokenBalance.data.formatted) &&
+            <button disabled={transactionLoading}
+              onClick={() => {
+                createtx();
+              }} className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm `}>
+              {tokenAllowance ?
 
-              <button
-                disabled={transactionLoading}
-                onClick={() => {
-                  createtx();
-                }} className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm `}>
+                <span className={`inline-flex self-center `}>
+                  {transactionLoading &&
+                    <Image
+                      className={`animate-spin`}
+                      src={'/loading.svg'}
+                      width={20}
+                      height={20}
 
+                    />
+                  }
+                  <span className={`flex self-center ml-2`} >
+                    Approve {token.value}
+                  </span>
+                </span>
+                :
                 <span className={`inline-flex self-center `}>
                   {transactionLoading &&
                     <Image
@@ -788,56 +949,65 @@ const Index = () => {
                     />
                   }
                   <span className={`flex self-center ml-2`} >
-                    Send
+                    Create Payment
                   </span>
                 </span>
-
-              </button>
-            }
-
-            {!isDisconnected && addressReciever != '' && token && token.value != connection.chain?.nativeCurrency.symbol && Number(tokenBalance.data?.value) != 0 &&
-              sendAmount.floatValue != undefined && sendAmount.floatValue != 0 && Number(sendAmount.value) <= Number(tokenBalance.data.formatted) &&
-
-              <button disabled={transactionLoading}
-                onClick={() => {
-                  createtx();
-                }} className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm `}>
-                {tokenAllowance ?
-
-                  <span className={`inline-flex self-center `}>
-                    {transactionLoading &&
-                      <Image
-                        className={`animate-spin`}
-                        src={'/loading.svg'}
-                        width={20}
-                        height={20}
-
-                      />
-                    }
-                    <span className={`flex self-center ml-2`} >
-                      Approve {token.value}
-                    </span>
-                  </span>
-                  :
-                  <span className={`inline-flex self-center `}>
-                    {transactionLoading &&
-                      <Image
-                        className={`animate-spin`}
-                        src={'/loading.svg'}
-                        width={20}
-                        height={20}
-                      />
-                    }
-                    <span className={`flex self-center ml-2`} >
-                      Create Payment
-                    </span>
-                  </span>
-                }
-              </button>
-            }
-          </span>
-        </React.Fragment>
+              }
+            </button>
+          }
+        </span>
       }
+
+      {/* {!isSSR && screen == "ViewTransactions" &&
+        <span className={`self-start justify-self-auto sm:justify-self-center 
+              col-start-1 col-end-8 row-start-3 row-end-4 sm:mx-4 p-4 mx-4
+              grid grid-rows-[30px,auto] grid-cols-[repeat(7,1fr)]
+               border-black border-[2px] bg-[aliceblue] dark:bg-[#100d23] rounded-2xl`}>
+
+          <span className={`
+          col-start-1 col-end-8 row-start-1 row-end-2
+           bg-[#1e1d45]
+           grid grid-cols-[repeat(4,1fr)] grid-rows-[30px]
+           `}>
+
+            <span className={`font-bold text-xs  dark:text-[#20cc9e] text-[#372963] self-center block m-2`}>
+              Address
+            </span>
+            <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center  m-2 `}>
+              Network
+            </span>
+            <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center  m-2 `}>
+              Receiving
+            </span>
+            <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center  m-2 `}>
+              Fee
+            </span>
+
+          </span>
+
+          <span className={`
+          col-start-1 col-end-8 row-start-2 row-end-3
+           bg-[#1e1d45]
+           grid grid-cols-[repeat(4,1fr)] grid-rows-[30px]
+           `}>
+            <span className={`font-bold text-xs  dark:text-[#20cc9e] text-[#372963] self-center block m-2`}>
+              {addressReciever}
+            </span>
+            <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center  m-2 `}>
+              {connection.chain?.id == '80001' && "Polygon (Mum)"}
+            </span>
+            <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center  m-2 `}>
+              {receivingAmount}
+            </span>
+            <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center  m-2 `}>
+              {fee}
+            </span>
+
+          </span>
+        </span>
+      } */}
+
+
 
     </div >
   )
