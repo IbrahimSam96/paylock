@@ -1,5 +1,6 @@
 import Head from 'next/head'
 import { useRouter } from 'next/router'
+import debounce from 'lodash.debounce';
 
 import {
   ConnectButton
@@ -16,7 +17,6 @@ import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import Modal from '@mui/material/Modal';
 
 
 
@@ -35,6 +35,9 @@ import PayFactory from '../artifacts/contracts/PayFactory.sol/PayLock.json'
 //  Light pink #c24bbe
 
 const Index = () => {
+
+
+  // Nextjs navigation
   const router = useRouter()
 
   // Theme Switch
@@ -280,7 +283,6 @@ const Index = () => {
 
         let transaction = await paylockContract.CreatePayement(addressReciever, _code, _tokenAddress, _tokenAmount, {
           value: value,
-          gasLimit: 21000,
         }
         );
         await transaction.wait().then((res) => {
@@ -768,24 +770,28 @@ const Index = () => {
             value={sendAmount.value}
             thousandSeparator
             suffix={token?.value}
-            onValueChange={(values) => {
-              setSendAmount(values);
+            onValueChange={
+              debounce((values) => {
+                setSendAmount(values);
+                console.log(values.value)
+                console.log(values.value * 1e18)
+                if (values.floatValue != 0 && values.floatValue) {
+                  // only if VALUE IS NOT 0 AND !undefined
+                  // Sets Receiving Amount and Fee and calculates usdValue 
+                  var fee = (Number(values.value) * 0.005) + token.value;
+                  setFee(fee)
+                  var feeUSD = "( $" + Intl.NumberFormat('en-US').format((Number(values.value) * 0.005) * USDValue) + ` USD)`
+                  setFeeUSD(feeUSD)
 
-              if (values.floatValue != 0 && values.floatValue) {
-                // only if VALUE IS NOT 0 AND !undefined
-                // Sets Receiving Amount and Fee and calculates usdValue 
-                var fee = (Number(values.value) * 0.005).toPrecision(5) + token.value;
-                setFee(fee)
-                var feeUSD = "( $" + Intl.NumberFormat('en-US').format((Number(values.value) * 0.005) * USDValue) + ` USD)`
-                setFeeUSD(feeUSD)
+                  var receivingAmount = (values.value * 1e18 - ((values.value * 0.005) * 1e18)) / 1e18 + token.value
+                  setReceivingAmount(receivingAmount);
+                  var receivingUSD = '( $' + Intl.NumberFormat('en-US').format((Number(values.value) - Number(values.value) * 0.005) * USDValue) + ' USD)'
+                  setReceivingAmountUSD(receivingUSD)
+                }
 
-                var receivingAmount = (Number(values.value) - (Number(values.value) * 0.005)).toPrecision(5) + token.value
-                setReceivingAmount(receivingAmount);
-                var receivingUSD = '( $' + Intl.NumberFormat('en-US').format((Number(values.value) - Number(values.value) * 0.005) * USDValue) + ' USD)'
-                setReceivingAmountUSD(receivingUSD)
-              }
+              }, 500)
 
-            }}
+            }
           />
 
           <Accordion

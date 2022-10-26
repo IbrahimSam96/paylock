@@ -551,6 +551,24 @@ contract PayLock is ERC2771Context, Ownable {
         }
     }
 
+    // gets all issued payments
+    function getIssuedPayments(address user)
+        public
+        view
+        returns (payment[] memory)
+    {
+        return s_issuedPayments[user];
+    }
+
+    // gets all redeemable payments
+    function getRedeemablePayments(address user)
+        public
+        view
+        returns (payment[] memory)
+    {
+        return s_redeemablePayments[user];
+    }
+
     // Overiders for ERC2711Context
     function _msgSender()
         internal
