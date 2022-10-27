@@ -309,7 +309,7 @@ const Index = () => {
 
           const IERC20ABI = require("../artifacts/@openzeppelin/contracts/token/ERC20/IERC20.sol/IERC20.json");
           let contract = new ethers.Contract(token.address, IERC20ABI.abi, signer);
-
+          // Approves current chain contract address to move sendAmount.value amount of selected token
           let transaction = await contract.approve(contractAddress, ethers.utils.parseEther((sendAmount.value).toString()));
 
           //  Block of code to try

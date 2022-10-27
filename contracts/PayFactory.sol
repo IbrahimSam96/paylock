@@ -450,7 +450,7 @@ contract PayLock is ERC2771Context, Ownable {
                 ) {
                     // Transfer tokens
                     bool success = IERC20(i_USDCAddress).transfer(
-                        msg.sender,
+                        _msgSender(),
                         reedemablePayments[i].value
                     );
                     if (!success) {
@@ -461,7 +461,7 @@ contract PayLock is ERC2771Context, Ownable {
                 ) {
                     // Transfer tokens
                     bool success = IERC20(i_USDTAddress).transfer(
-                        msg.sender,
+                        _msgSender(),
                         reedemablePayments[i].value
                     );
                     if (!success) {
@@ -470,7 +470,7 @@ contract PayLock is ERC2771Context, Ownable {
                 } else if (reedemablePayments[i].tokenAddress == i_DAIAddress) {
                     // Transfer tokens
                     bool success = IERC20(i_DAIAddress).transfer(
-                        msg.sender,
+                        _msgSender(),
                         reedemablePayments[i].value
                     );
                     if (!success) {
@@ -481,7 +481,7 @@ contract PayLock is ERC2771Context, Ownable {
                 ) {
                     // Transfer tokens
                     bool success = IERC20(i_WBTCAddress).transfer(
-                        msg.sender,
+                        _msgSender(),
                         reedemablePayments[i].value
                     );
                     if (!success) {

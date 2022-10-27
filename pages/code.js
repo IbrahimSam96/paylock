@@ -26,6 +26,28 @@ import PayFactory from '../artifacts/contracts/PayFactory.sol/PayLock.json'
 const Code = () => {
 
     const [mumbaiRedeemablePayments, setMumbaiRedeemablePayments] = React.useState([]);
+
+
+    const [code, setCode] = useState('');
+    const [transactionLoading, setTransactionLoading] = useState(false);
+    const [contractAddress, setContractAddress] = useState('');
+    const { data, isError, isLoading, isSuccess, signMessage } = useSignMessage({
+        onSuccess: async (sign, msg) => {
+            let recovered = await ethers.utils.verifyMessage(msg.message, sign);
+            if (recovered == address) {
+                console.log('Calling Relayer');
+
+                await axios.post('/api/redeem', { code: code }).then((res) => {
+                    setTransactionLoading(false);
+
+                }).catch((err) => {
+                    console.log(err)
+                    setTransactionLoading(false);
+                })
+            }
+        }
+    })
+
     const [isSSR, setIsSSR] = useState(true);
     const { address, isConnecting, isDisconnected } = useAccount();
     const connection = useNetwork();
@@ -47,14 +69,46 @@ const Code = () => {
                 const provider = new ethers.providers.JsonRpcProvider(`https://polygon-mumbai.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`);
                 const contract = new ethers.Contract(mumbaiAddress, PayFactory.abi, provider);
                 const data = await contract.getRedeemablePayments(address);
-                console.log(data)
+                console.log(parseInt(data[0].code._hex))
+                console.log(parseInt(data[0].value._hex) / 1e18)
+
                 setMumbaiRedeemablePayments(data);
             }
 
             getMumbaiRedeemablePayments();
-
         }
+
+        // <<<<<<<<<<>>>>>>>>>>>>>> REST OF CHAINS <<<<<<<<<<>>>>>>>>>>>>>>
+
     }, [])
+
+    //  Switches evm contract adddress to connected chain
+    useEffect(() => {
+        if (connection.chain?.name == "Ethereum") {
+            setContractAddress(EthAddress)
+        }
+        if (connection.chain?.name == 'Polygon') {
+            setContractAddress(PolygonAddress)
+        }
+        if (connection.chain?.name == 'Polygon Mumbai') {
+            setContractAddress(mumbaiAddress)
+        }
+    }, [connection.chain]);
+
+
+
+    const redeemPayment = async (_code) => {
+        try {
+            if (_code == code) {
+                // adds spinner
+                setTransactionLoading(true);
+                signMessage({ message: `Please sign to confirm and receive payment` });
+
+            }
+        } catch (error) {
+            setTransactionLoading(false);
+        }
+    }
 
 
     return (
@@ -206,7 +260,7 @@ const Code = () => {
                             {mumbaiRedeemablePayments.map((transaction) => {
                                 return (
                                     <Accordion
-                                        id={parseInt(transaction.receiverId._hex)}
+                                        key={parseInt(transaction.receiverId._hex)}
                                         className={`dark:bg-[#100d23] bg-[aliceblue] col-start-1 col-end-8 my-2`}
                                         sx={{}}
                                         disableGutters={true}
@@ -313,14 +367,14 @@ const Code = () => {
                                                             disabled={isDisconnected}
                                                             className={`focus:outline-none font-extralight text-xs rounded ml-2 `}
                                                             allowNegative={false}
-
+                                                            value={code}
                                                             onValueChange={
                                                                 debounce((values) => {
 
                                                                     if (values.floatValue != 0 && values.floatValue) {
                                                                         // only if VALUE IS NOT 0 AND !undefined
                                                                         // Sets Receiving Amount and Fee and calculates usdValue 
-
+                                                                        setCode(values.value)
                                                                     }
 
                                                                 }, 500)
@@ -329,8 +383,24 @@ const Code = () => {
                                                         />
                                                     </span>
 
-                                                    <button className={`w-full p-2 self-center  bg-[#1e1d45] dark:bg-[#100d23] text-[#c24bbe] text-sm `}>
-                                                        Withdraw Payment
+                                                    <button
+                                                        disabled={transactionLoading}
+                                                        onClick={() => {
+                                                            redeemPayment(transaction.code)
+                                                        }} className={`w-full  p-2 self-center  bg-[#1e1d45] dark:bg-[#100d23] text-[#c24bbe] text-sm `}>
+                                                        {transactionLoading &&
+                                                            <Image
+                                                                className={`animate-spin inline`}
+                                                                src={'/loading.svg'}
+                                                                width={20}
+                                                                height={20}
+
+                                                            />
+                                                        }
+                                                        <span className={`align-super`}>
+                                                            Withdraw Payment
+                                                        </span>
+
                                                     </button>
                                                 </React.Fragment>
 
