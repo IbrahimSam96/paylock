@@ -7,12 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "deploy_Mumbai": "npx hardhat run scripts/deploy.js --network polygonMumbai "
+    "deploy_Mumbai": "npx hardhat run scripts/deploys.js --network polygonMumbai "
   },
   "dependencies": {
     "@chainlink/contracts": "^0.4.2",
     "@emotion/react": "^11.10.4",
     "@emotion/styled": "^11.10.4",
+    "@metamask/eth-sig-util": "^5.0.0",
     "@mui/icons-material": "^5.10.6",
     "@mui/material": "^5.10.6",
     "@nomiclabs/hardhat-ethers": "^2.0.5",
@@ -20,9 +21,11 @@
     "@openzeppelin/contracts": "^4.5.0",
     "@rainbow-me/rainbowkit": "^0.5.1",
     "axios": "^1.1.2",
+    "defender-autotask-client": "^1.34.0",
     "defender-relay-client": "^1.31.1",
     "dotenv": "^16.0.1",
     "ethereum-waffle": "^3.4.0",
+    "ethereumjs-util": "^7.1.5",
     "ethers": "^5.5.4",
     "hardhat": "^2.8.4",
     "next": "12.2.5",

@@ -2,7 +2,7 @@ import debounce from 'lodash.debounce';
 import {
     ConnectButton
 } from '@rainbow-me/rainbowkit';
-import { useConnect, useNetwork, useBalance, useAccount, useSignTypedData, useSignMessage, useSigner, useContract, chain } from 'wagmi';
+import { useConnect, useNetwork, useBalance, useAccount, useSignTypedData, useSignMessage, useSigner, useProvider, useContract, chain } from 'wagmi';
 import { ethers, providers } from 'ethers';
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import Image from 'next/image';
@@ -17,40 +17,32 @@ import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
+// Contract and Forwarder Addresses 
+import PaylockAddressPolygon from '../polygon.json';
+import PaylockAddressMumbai from '../mumbai.json';
+import PaylockAddressEth from '../eth.json'
 
-import { PolygonAddress } from '../polygon';
-import { mumbaiAddress } from '../mumbai';
-import { EthAddress } from '../eth'
+import MinimalForwarderPolygon from '../polygon.json';
+import MinimalForwarderMumbai from '../mumbai.json';
+import MinimalForwarderEth from '../eth.json'
+
 import PayFactory from '../artifacts/contracts/PayFactory.sol/PayLock.json'
 
 const Code = () => {
 
     const [mumbaiRedeemablePayments, setMumbaiRedeemablePayments] = React.useState([]);
 
-
     const [code, setCode] = useState('');
     const [transactionLoading, setTransactionLoading] = useState(false);
     const [contractAddress, setContractAddress] = useState('');
-    const { data, isError, isLoading, isSuccess, signMessage } = useSignMessage({
-        onSuccess: async (sign, msg) => {
-            let recovered = await ethers.utils.verifyMessage(msg.message, sign);
-            if (recovered == address) {
-                console.log('Calling Relayer');
-
-                await axios.post('/api/redeem', { code: code }).then((res) => {
-                    setTransactionLoading(false);
-
-                }).catch((err) => {
-                    console.log(err)
-                    setTransactionLoading(false);
-                })
-            }
-        }
-    })
+    const [forwarder, setForwarder] = useState('');
 
     const [isSSR, setIsSSR] = useState(true);
     const { address, isConnecting, isDisconnected } = useAccount();
     const connection = useNetwork();
+    // const provider = useProvider()
+
+    const { data: signer } = useSigner();
     const router = useRouter()
     const [toggle, setToogle] = useState(true);
 
@@ -67,14 +59,12 @@ const Code = () => {
             // gets PolygonMumbai Payments  
             const getMumbaiRedeemablePayments = async () => {
                 const provider = new ethers.providers.JsonRpcProvider(`https://polygon-mumbai.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`);
-                const contract = new ethers.Contract(mumbaiAddress, PayFactory.abi, provider);
+                const contract = new ethers.Contract(PaylockAddressMumbai.PaylockAddressMumbai, PayFactory.abi, provider);
                 const data = await contract.getRedeemablePayments(address);
-                console.log(parseInt(data[0].code._hex))
-                console.log(parseInt(data[0].value._hex) / 1e18)
+                console.log(data[0])
 
                 setMumbaiRedeemablePayments(data);
             }
-
             getMumbaiRedeemablePayments();
         }
 
@@ -82,30 +72,133 @@ const Code = () => {
 
     }, [])
 
-    //  Switches evm contract adddress to connected chain
+    //  Switches paylock contract and forwarder adddress to connected chain
     useEffect(() => {
         if (connection.chain?.name == "Ethereum") {
-            setContractAddress(EthAddress)
+            setContractAddress(PaylockAddressEth.PaylockAddressEth)
+            setForwarder(MinimalForwarderEth.MinimalForwarderEth)
         }
         if (connection.chain?.name == 'Polygon') {
-            setContractAddress(PolygonAddress)
+            setContractAddress(PaylockAddressPolygon.PaylockAddressPolygon)
+            setForwarder(MinimalForwarderPolygon.MinimalForwarderPolygon)
         }
         if (connection.chain?.name == 'Polygon Mumbai') {
-            setContractAddress(mumbaiAddress)
+            setContractAddress(PaylockAddressMumbai.PaylockAddressMumbai)
+            setForwarder(MinimalForwarderMumbai.MinimalForwarderMumbai)
         }
     }, [connection.chain]);
 
 
-
     const redeemPayment = async (_code) => {
+
         try {
             if (_code == code) {
                 // adds spinner
                 setTransactionLoading(true);
-                signMessage({ message: `Please sign to confirm and receive payment` });
+
+                const EIP712DomainType = [
+                    { name: 'name', type: 'string' },
+                    { name: 'version', type: 'string' },
+                    { name: 'chainId', type: 'uint256' },
+                    { name: 'verifyingContract', type: 'address' }
+                ]
+
+                const ForwardRequestType = [
+                    { name: 'from', type: 'address' },
+                    { name: 'to', type: 'address' },
+                    { name: 'value', type: 'uint256' },
+                    { name: 'gas', type: 'uint256' },
+                    { name: 'nonce', type: 'uint256' },
+                    { name: 'data', type: 'bytes' }
+                ]
+
+
+                const types = { ForwardRequestType };
+
+                // Get nonce for forwarder contract 
+                let Forwarder = require("../contracts/forwarder");
+
+                // const Userprovider = new ethers.providers.Web3Provider(window.ethereum);
+                // const signer = Userprovider.getSigner();
+                const provider = new ethers.providers.JsonRpcProvider(`https://polygon-mumbai.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`);
+
+                const forwarderContract = new ethers.Contract(forwarder, Forwarder.ForwarderAbi, provider);
+                const nonce = await forwarderContract.getNonce(address).then(nonce => nonce.toString());
+                const chainId = await forwarderContract.provider.getNetwork().then(n => n.chainId);
+
+                console.log("nonce:", nonce)
+                console.log("chainId:", chainId)
+
+                // Encode meta-tx request
+                const boxesInterface = new ethers.utils.Interface(PayFactory.abi);
+                const data = boxesInterface.encodeFunctionData('RedeemPayment', [code]);
+
+                const request = {
+                    from: address,
+                    to: contractAddress,
+                    value: 0,
+                    gas: 1e6,
+                    nonce,
+                    data
+                };
+
+                const TypedData = {
+                    domain: {
+                        name: 'MinimalForwarder',
+                        version: '0.0.1',
+                        chainId: chainId,
+                        verifyingContract: forwarder,
+                    },
+                    primaryType: 'ForwardRequest',
+                    types: {
+                        EIP712Domain: EIP712DomainType,
+                        ForwardRequest: ForwardRequestType
+                    },
+                    message: {
+                        request
+                    }
+                };
+                const toSign = { ...TypedData, message: request };
+
+                // const signature = await signer._signTypedData(TypedData.domain, types, request);
+
+                const signature = await signer.provider.send('eth_signTypedData_v4',
+                    [address, JSON.stringify(toSign)]);
+
+                let recovered = await ethers.utils.verifyTypedData(TypedData.domain, types, request, signature);
+
+                const valid = await forwarderContract.verify(request, signature);
+
+                console.log("valid:", valid)
+
+                console.log("recoveredAddress:", recovered)
+                if (valid) {
+                    // console.log('verified TypedData');
+
+                    await axios.post('/api/redeem', {
+                        code: code,
+                        signature: signature,
+                        request: request,
+                        chainID: chainId,
+                        contractAddress: contractAddress,
+                        forwarder: forwarder
+                    }).then((res) => {
+                        setTransactionLoading(false);
+
+                    }).catch((err) => {
+                        console.log(err)
+                        setTransactionLoading(false);
+                    })
+                }
+                else {
+                    console.log("Wrong recovered Addy")
+                    setTransactionLoading(false);
+                }
+
 
             }
         } catch (error) {
+            console.log(error)
             setTransactionLoading(false);
         }
     }

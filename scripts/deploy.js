@@ -6,8 +6,6 @@ require('dotenv').config();
 async function main() {
 
   const chainId = hre.network.config.chainId;
-  console.log(process.env.NEXT_PUBLIC_APIKey)
-  console.log(process.env.NEXT_PUBLIC_APISecret)
 
   const credentials = { apiKey: process.env.NEXT_PUBLIC_APIKey, apiSecret: process.env.NEXT_PUBLIC_APISecret };
   const provider = new DefenderRelayProvider(credentials);

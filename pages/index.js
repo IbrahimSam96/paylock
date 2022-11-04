@@ -17,12 +17,14 @@ import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+// Contract and Forwarder Addresses 
+import PaylockAddressPolygon from '../polygon.json';
+import PaylockAddressMumbai from '../mumbai.json';
+import PaylockAddressEth from '../eth.json'
 
-
-
-import { PolygonAddress } from '../polygon';
-import { mumbaiAddress } from '../mumbai';
-import { EthAddress } from '../eth'
+import MinimalForwarderPolygon from '../polygon.json';
+import MinimalForwarderMumbai from '../mumbai.json';
+import MinimalForwarderEth from '../eth.json'
 
 import PayFactory from '../artifacts/contracts/PayFactory.sol/PayLock.json'
 
@@ -42,7 +44,6 @@ const Index = () => {
 
   // Theme Switch
   const [toggle, setToogle] = useState(true);
-
   useEffect(() => {
     if ((localStorage.getItem('theme') === 'dark')) {
       console.log("It's dark..");
@@ -73,6 +74,7 @@ const Index = () => {
     formattedValue: "",
     value: ""
   });
+
   const [fee, setFee] = useState("");
   const [feeUSD, setFeeUSD] = useState("");
   const [receivingAmount, setReceivingAmount] = useState("");
@@ -83,23 +85,7 @@ const Index = () => {
   const [transactionLoading, setTransactionLoading] = useState(false);
   const [contractAddress, setContractAddress] = useState('');
 
-
   const { data: signer } = useSigner();
-  const { data, isError, isLoading, isSuccess, signMessage } = useSignMessage({
-    onSuccess: async (sign, msg) => {
-      let recovered = await ethers.utils.verifyMessage(msg.message, sign);
-      if (recovered == address) {
-        console.log('Calling Relayer')
-      }
-
-      // fetch('/api/hello')
-      //   .then((res) => res.json())
-      //   .then((data) => {
-      //     console.log(data)
-
-      //   })
-    }
-  })
   const { address, isConnecting, isDisconnected } = useAccount();
   const connection = useNetwork();
   const nativeBalance = useBalance({
@@ -162,20 +148,20 @@ const Index = () => {
     setIsSSR(false);
   }, []);
 
-  // Refresh token value and paylock evm contract adddress when connection chain changes
+  // Refresh token value and paylock evm contract and forwarder adddresses when connection chain changes
   useEffect(() => {
     // changes token
     if (tokenOptions) {
       setToken(tokenOptions[0])
     }
     if (connection.chain?.name == "Ethereum") {
-      setContractAddress(EthAddress)
+      setContractAddress(PaylockAddressEth.PaylockAddressEth)
     }
     if (connection.chain?.name == 'Polygon') {
-      setContractAddress(PolygonAddress)
+      setContractAddress(PaylockAddressPolygon.PaylockAddressPolygon)
     }
     if (connection.chain?.name == 'Polygon Mumbai') {
-      setContractAddress(mumbaiAddress)
+      setContractAddress(PaylockAddressMumbai.PaylockAddressMumbai)
     }
   }, [connection.chain, tokenOptions]);
 
@@ -250,21 +236,7 @@ const Index = () => {
 
   }, [token, connection.chain, sendAmount])
 
-  const withdrawTx = async () => {
-    var message = `Sending ${addressReciever} :  ${sendAmount.formattedValue}`
-    let messageHash = ethers.utils.id(message);
-    let messageHashBytes = ethers.utils.arrayify(messageHash)
-
-    signMessage({ message: message });
-  }
-
   const createtx = async () => {
-    // Estimate fee, NOTE: ERRORS on Mumbai but works on eth mainnet
-    // var gasfee = (await signer.getFeeData()).gasPrice._hex
-    // var contractFee = await contract.estimateGas.CreatePayement(addressReciever, '1141')
-    // var estimatedGas = ethers.utils.formatUnits(Number(gasfee) * Number(contractFee._hex), "ether")
-    // console.log("estimatedGas:", estimatedGas)
-
     // Transaction Variables
     // Generates random code number 
     let min = 1000;
@@ -497,7 +469,7 @@ const Index = () => {
       {!isSSR && screen == "SingleTransaction" &&
         <span className={`fade self-start justify-self-auto sm:justify-self-center 
            col-start-1 col-end-8 row-start-3 row-end-4 sm:mx-4 p-4 mx-4
-           grid grid-rows-[40px,min-content,30px,30px,40px,30px,auto,30px,min-content,50px] grid-cols-1
+           grid grid-rows-[40px,min-content,30px,30px,40px,30px,auto,30px,min-content,70px] grid-cols-1
             border-black border-[2px] bg-[aliceblue] dark:bg-[#100d23] rounded-2xl  `}>
 
           <span className={`grid grid-col-1 grid-rows-1 p-3`} >
@@ -873,7 +845,7 @@ const Index = () => {
           </Accordion>
 
           {isDisconnected &&
-            <span className={`justify-self-center self-center`}>
+            <span className={`mt-2 justify-self-center self-center`}>
               <ConnectButton />
             </span>
           }
@@ -903,7 +875,7 @@ const Index = () => {
               disabled={transactionLoading}
               onClick={() => {
                 createtx();
-              }} className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm `}>
+              }} className={`p-2 max-h-[32px] self-center bg-[#1e1d45] text-[#c24bbe] text-sm `}>
 
               <span className={`inline-flex self-center `}>
                 {transactionLoading &&
@@ -927,7 +899,7 @@ const Index = () => {
             <button disabled={transactionLoading}
               onClick={() => {
                 createtx();
-              }} className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm `}>
+              }} className={`p-2 max-h-[32px] self-center bg-[#1e1d45] text-[#c24bbe] text-sm `}>
               {tokenAllowance ?
 
                 <span className={`inline-flex self-center `}>
