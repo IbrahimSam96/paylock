@@ -148,7 +148,7 @@ contract PayLock is ERC2771Context, Ownable {
             }
             // prepare new memory payment struct
             payment memory newPayment;
-            //If USD fee value (0.5%) equals more than 50USD, cap fee at 50 USD
+            //If USD fee value equals more than 50USD, cap fee at 50 USD
             if (
                 (msg.value / 200).getConversionRate(i_priceFeedNative) >
                 MAXIMUM_FEE_USD
@@ -157,21 +157,9 @@ contract PayLock is ERC2771Context, Ownable {
                     msg.value -
                     MAXIMUM_FEE_USD.getMaxRate(i_priceFeedNative);
                 s_PaySafe += MAXIMUM_FEE_USD.getMaxRate(i_priceFeedNative);
-
-                (bool success, ) = i_forwarder.call{
-                    value: MAXIMUM_FEE_USD.getMaxRate(i_priceFeedNative)
-                }("");
-                if (!success) {
-                    revert __TransferFailed();
-                }
             } else {
                 newPayment.value = msg.value - msg.value / 200;
                 s_PaySafe += msg.value / 200;
-
-                (bool success, ) = i_forwarder.call{value: msg.value / 200}("");
-                if (!success) {
-                    revert __TransferFailed();
-                }
             }
 
             // Issue payment
@@ -335,66 +323,86 @@ contract PayLock is ERC2771Context, Ownable {
      *
      * Emits a {PaymentWithdrawn} event.
      */
-    function withdrawIssuerPayment(uint256 index) public payable {
+
+    function withdrawIssuerPayment(uint256 _code, uint256 _receiverId)
+        public
+        payable
+    {
         // Lookup issued payment in issuer's issued transactions
-        payment memory issuedPayment = s_issuedPayments[_msgSender()][index];
-        // Payment must be active and sender must be the payment issuer.
-        bool notActive = issuedPayment.state != PaymentState.ACTIVE;
-        bool notSender = issuedPayment.issuer != _msgSender();
-        bool conditions = (notActive || notSender);
-        if (conditions) {
-            revert __NotSenderOrNotActive();
+        payment[] memory issuedPayments = s_issuedPayments[_msgSender()];
+        // No reedemable payments
+        if (issuedPayments.length == 0) {
+            revert __NoReedemablePayments();
         }
-        //Change payment state to Withdrawn.
-        s_redeemablePayments[issuedPayment.receiver][issuedPayment.receiverId]
-            .state = PaymentState.WITHDRAWN;
-        s_issuedPayments[_msgSender()][index].state = PaymentState.WITHDRAWN;
-        // Emit PaymentWithdrawn event
-        emit PaymentWithdrawn(_msgSender(), issuedPayment);
-        // Value transfer either native or erc20 transfer.
-        if (issuedPayment.tokenAddress == address(0)) {
-            (bool success, ) = _msgSender().call{value: issuedPayment.value}(
-                ""
-            );
-            if (!success) {
-                revert __TransferFailed();
-            }
-        } else if (issuedPayment.tokenAddress == i_USDCAddress) {
-            // Transfer tokens
-            bool success = IERC20(i_USDCAddress).transfer(
-                msg.sender,
-                issuedPayment.value
-            );
-            if (!success) {
-                revert __TransferFailed();
-            }
-        } else if (issuedPayment.tokenAddress == i_USDTAddress) {
-            // Transfer tokens
-            bool success = IERC20(i_USDTAddress).transfer(
-                msg.sender,
-                issuedPayment.value
-            );
-            if (!success) {
-                revert __TransferFailed();
-            }
-        } else if (issuedPayment.tokenAddress == i_DAIAddress) {
-            // Transfer tokens
-            bool success = IERC20(i_DAIAddress).transfer(
-                msg.sender,
-                issuedPayment.value
-            );
-            if (!success) {
-                revert __TransferFailed();
-            }
-        } else if (issuedPayment.tokenAddress == i_WBTCAddress) {
-            // Transfer tokens
-            bool success = IERC20(i_WBTCAddress).transfer(
-                msg.sender,
-                issuedPayment.value
-            );
-            if (!success) {
-                revert __TransferFailed();
-            }
+        // Loop for reedemable payments with the code entered for the caller.
+        for (uint256 i = 0; i < issuedPayments.length; i++) {
+            // If code is valid and Requirements are met transfer payment.
+            if (
+                issuedPayments[i].code == _code &&
+                issuedPayments[i].receiverId == _receiverId
+            ) {
+                // Payment must be active and sender must be the payment issuer.
+                bool notActive = issuedPayments[i].state != PaymentState.ACTIVE;
+                bool notSender = issuedPayments[i].issuer != _msgSender();
+                bool conditions = (notActive || notSender);
+                if (conditions) {
+                    revert __NotSenderOrNotActive();
+                }
+                //Change payment state to Withdrawn.
+                s_redeemablePayments[issuedPayments[i].receiver][
+                    issuedPayments[i].receiverId
+                ].state = PaymentState.WITHDRAWN;
+
+                s_issuedPayments[_msgSender()][i].state = PaymentState
+                    .WITHDRAWN;
+                // Emit PaymentWithdrawn event
+                emit PaymentWithdrawn(_msgSender(), issuedPayments[i]);
+                // Value transfer either native or erc20 transfer.
+                if (issuedPayments[i].tokenAddress == address(0)) {
+                    (bool success, ) = _msgSender().call{
+                        value: issuedPayments[i].value
+                    }("");
+                    if (!success) {
+                        revert __TransferFailed();
+                    }
+                } else if (issuedPayments[i].tokenAddress == i_USDCAddress) {
+                    // Transfer tokens
+                    bool success = IERC20(i_USDCAddress).transfer(
+                        _msgSender(),
+                        issuedPayments[i].value
+                    );
+                    if (!success) {
+                        revert __TransferFailed();
+                    }
+                } else if (issuedPayments[i].tokenAddress == i_USDTAddress) {
+                    // Transfer tokens
+                    bool success = IERC20(i_USDTAddress).transfer(
+                        _msgSender(),
+                        issuedPayments[i].value
+                    );
+                    if (!success) {
+                        revert __TransferFailed();
+                    }
+                } else if (issuedPayments[i].tokenAddress == i_DAIAddress) {
+                    // Transfer tokens
+                    bool success = IERC20(i_DAIAddress).transfer(
+                        _msgSender(),
+                        issuedPayments[i].value
+                    );
+                    if (!success) {
+                        revert __TransferFailed();
+                    }
+                } else if (issuedPayments[i].tokenAddress == i_WBTCAddress) {
+                    // Transfer tokens
+                    bool success = IERC20(i_WBTCAddress).transfer(
+                        _msgSender(),
+                        issuedPayments[i].value
+                    );
+                    if (!success) {
+                        revert __TransferFailed();
+                    }
+                }
+            } else {}
         }
     }
 
@@ -408,7 +416,7 @@ contract PayLock is ERC2771Context, Ownable {
      *
      * Emits a {PaymentReedemed} event.
      */
-    function RedeemPayment(uint256 _code) public payable {
+    function RedeemPayment(uint256 _code, uint256 _receiverId) public payable {
         payment[] memory reedemablePayments = s_redeemablePayments[
             _msgSender()
         ];
@@ -419,11 +427,15 @@ contract PayLock is ERC2771Context, Ownable {
         // Loop for reedemable payments with the code entered for the caller.
         for (uint256 i = 0; i < reedemablePayments.length; i++) {
             // If code is valid and Requirements are met transfer payment.
-            if (reedemablePayments[i].code == _code) {
+            if (
+                reedemablePayments[i].code == _code &&
+                reedemablePayments[i].receiverId == _receiverId
+            ) {
                 bool notActive = reedemablePayments[i].state !=
                     PaymentState.ACTIVE;
                 bool notReceiver = reedemablePayments[i].receiver !=
                     _msgSender();
+
                 bool conditions = (notActive || notReceiver);
 
                 if (conditions) {
@@ -489,7 +501,7 @@ contract PayLock is ERC2771Context, Ownable {
                     }
                 }
             } else {
-                revert __InvalidCode();
+                // revert __InvalidCode();
             }
         }
     }

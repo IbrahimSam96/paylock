@@ -22,7 +22,7 @@ async function main() {
 
     const PaylockContract = await hre.ethers.getContractFactory("PayLock");
 
-    let MinimalForwarder = ''
+    let MinimalForwarder = forwarder.address
     let AggregatorNative = ''
     let AggregatorUSDC = ''
 
@@ -36,7 +36,6 @@ async function main() {
 
     // Polygon(Matic) Mumbai testnet <3
     if (chainId == 80001) {
-        MinimalForwarder = '0x25b56ddb6ffbf355ba3f5299aaac38150f469782'
         AggregatorNative = '0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada'
         AggregatorUSDC = '0x572dDec9087154dC5dfBB1546Bb62713147e0Ab0'
         AggregatorUSDT = '0x92C09849638959196E976289418e5973CC96d645'
@@ -49,7 +48,6 @@ async function main() {
     }
     // Eth Mainnet <3
     if (chainId == 1) {
-        MinimalForwarder = ''
         AggregatorNative = '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419'
         AggregatorUSDC = '0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6'
         AggregatorUSDT = '0x3E7d1eAB13ad0104d2750B8863b489D65364e32D'
@@ -62,7 +60,6 @@ async function main() {
     }
     // Polygon(Matic) Mainnet <3
     if (chainId == 137) {
-        MinimalForwarder = ''
         AggregatorNative = '0xAB594600376Ec9fD91F8e885dADF0CE036862dE0'
         AggregatorUSDC = '0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7'
         AggregatorUSDT = '0x0A6513e40db6EB1b165753AD52E80663aeA50545'

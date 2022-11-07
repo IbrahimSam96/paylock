@@ -1,7 +1,5 @@
+
 import debounce from 'lodash.debounce';
-import {
-    ConnectButton
-} from '@rainbow-me/rainbowkit';
 import { useConnect, useNetwork, useBalance, useAccount, useSignTypedData, useSignMessage, useSigner, useProvider, useContract, chain } from 'wagmi';
 import { ethers, providers } from 'ethers';
 import React, { useEffect, useRef, useState, useMemo } from 'react';
@@ -29,9 +27,9 @@ import MinimalForwarderEth from '../eth.json'
 import PayFactory from '../artifacts/contracts/PayFactory.sol/PayLock.json'
 import Navigation from './components/Navigation';
 
-const Code = () => {
+const Transactions = () => {
 
-    const [mumbaiRedeemablePayments, setMumbaiRedeemablePayments] = React.useState([]);
+    const [mumbaiIssuedPayments, setMumbaiIssuedPayments] = React.useState([]);
 
     const [code, setCode] = useState('');
     const [transactionLoading, setTransactionLoading] = useState(false);
@@ -58,9 +56,9 @@ const Code = () => {
             const getMumbaiRedeemablePayments = async () => {
                 const provider = new ethers.providers.JsonRpcProvider(`https://polygon-mumbai.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`);
                 const contract = new ethers.Contract(PaylockAddressMumbai.PaylockAddress, PayFactory.abi, provider);
-                const data = await contract.getRedeemablePayments(address);
+                const data = await contract.getIssuedPayments(address);
 
-                setMumbaiRedeemablePayments(data);
+                setMumbaiIssuedPayments(data);
             }
             getMumbaiRedeemablePayments();
         }
@@ -102,7 +100,7 @@ const Code = () => {
             }
         }
     }
-    const redeemPayment = async (_code, _receiverId) => {
+    const withdrawIssuerPayment = async (_code, _receiverId) => {
         try {
             if (_code == code) {
                 // adds spinner
@@ -135,14 +133,11 @@ const Code = () => {
                 const nonce = await forwarderContract.getNonce(address).then(nonce => nonce.toString());
                 const chainId = await forwarderContract.provider.getNetwork().then(n => n.chainId);
 
-                console.log("nonce:", nonce)
-                console.log("chainId:", chainId)
-
                 // Encode meta-tx request
                 const paylockContract = new ethers.Contract(contractAddress, PayFactory.abi, provider);
 
                 // const boxesInterface = new ethers.utils.Interface(PayFactory.abi);
-                const data = paylockContract.interface.encodeFunctionData('RedeemPayment', [code, _receiverId]);
+                const data = paylockContract.interface.encodeFunctionData('withdrawIssuerPayment', [code, _receiverId]);
                 const request = {
                     from: address,
                     to: contractAddress,
@@ -179,9 +174,6 @@ const Code = () => {
 
                 const valid = await forwarderContract.verify(request, signature);
 
-                console.log("valid:", valid)
-
-                console.log("recoveredAddress:", recovered)
                 if (valid) {
                     // console.log('verified TypedData');
 
@@ -211,7 +203,6 @@ const Code = () => {
         }
     }
 
-
     return (
         <div className={` h-full min-h-screen w-full grid grid-cols-[repeat(7,1fr)] grid-rows-[100px,25px,auto,100px] ${!isSSR && connection.chain?.name == "Ethereum" && `bg-[#383843]`} bg-[#131341]`}>
             <Head>
@@ -225,26 +216,26 @@ const Code = () => {
             <React.Fragment>
                 {!isSSR && !isDisconnected &&
                     <span className={`self-start justify-self-auto sm:justify-self-center 
-        col-start-1 col-end-8 row-start-3 row-end-4 sm:mx-4 p-4 mx-4
-        grid grid-rows-[30px,auto] grid-cols-[repeat(7,1fr)]
-         border-black border-[2px] bg-[aliceblue] dark:bg-[#100d23] rounded-2xl`}>
+    col-start-1 col-end-8 row-start-3 row-end-4 sm:mx-4 p-4 mx-4
+    grid grid-rows-[30px,auto] grid-cols-[repeat(7,1fr)]
+     border-black border-[2px] bg-[aliceblue] dark:bg-[#100d23] rounded-2xl`}>
 
                         <span className={`
-                                 col-start-1 col-end-8 row-start-1 row-end-2
-                               bg-[aliceblue] dark:bg-[#1e1d45]
-                                 grid grid-cols-[repeat(4,1fr)] grid-rows-[30px]
-                          `}>
+                             col-start-1 col-end-8 row-start-1 row-end-2
+                           bg-[aliceblue] dark:bg-[#1e1d45]
+                             grid grid-cols-[repeat(4,1fr)] grid-rows-[30px]
+                      `}>
                             <span className={`font-bold text-xs  dark:text-[#20cc9e] text-[#372963] self-center block m-2`}>
-                                Payments
+                                Issued Payments
                             </span>
                         </span>
 
                         <span className={`
-                                         col-start-1 col-end-8 row-start-2 row-end-3
-                                         bg-[aliceblue] dark:bg-[#1e1d45]
-                                        grid grid-cols-[repeat(4,1fr)] grid-rows-[1]`
+                                     col-start-1 col-end-8 row-start-2 row-end-3
+                                     bg-[aliceblue] dark:bg-[#1e1d45]
+                                    grid grid-cols-[repeat(4,1fr)] grid-rows-[1]`
                         }>
-                            {mumbaiRedeemablePayments.map((transaction) => {
+                            {mumbaiIssuedPayments.map((transaction) => {
                                 return (
                                     <Accordion
                                         key={parseInt(transaction.receiverId._hex)}
@@ -263,7 +254,7 @@ const Code = () => {
 
                                             <Avatar className=" ml-2 w-8 h-8 inline self-center" {...config.current} />
 
-                                            <span className={`self-center ml-2 font-bold text-xs dark:text-[#20cc9e] text-[#372963]`}>{transaction.issuer.substring(0, 4) + "..." + transaction.issuer.substring(38, 42)}</span>
+                                            <span className={`self-center ml-2 font-bold text-xs dark:text-[#20cc9e] text-[#372963]`}>{transaction.receiver.substring(0, 4) + "..." + transaction.receiver.substring(38, 42)}</span>
 
                                             <span className={`self-center ml-2 font-bold text-xs dark:text-[#20cc9e] text-[#372963] flex`}>
                                                 {transaction.tokenAddress == '0x0000000000000000000000000000000000000000' ?
@@ -369,6 +360,10 @@ const Code = () => {
                                                         <span className={`blur-sm hover:blur-none self-center ml-2 mr-2 font-bold text-xs dark:text-[#20cc9e] text-[#372963]`}>
                                                             {Number(transaction.value._hex) / 1e18}
                                                         </span>
+                                                        <span className={`self-center ml-2 font-bold text-xs text-[#20cc9e] dark:text-[#149adc]`}>Code:</span>
+                                                        <span className={`blur-sm hover:blur-none self-center ml-2 mr-2 font-bold text-xs dark:text-[#20cc9e] text-[#372963]`}>
+                                                            {parseInt(transaction.code._hex)}
+                                                        </span>
                                                     </React.Fragment>
                                                     :
                                                     <React.Fragment>
@@ -384,6 +379,10 @@ const Code = () => {
                                                         <span className={`self-center ml-2 font-bold text-xs text-[#20cc9e] dark:text-[#149adc]`}>Amount:</span>
                                                         <span className={`blur-sm hover:blur-none self-center ml-2 mr-2 font-bold text-xs dark:text-[#20cc9e] text-[#372963]`}>
                                                             {Number(transaction.value._hex) / 1e18}
+                                                        </span>
+                                                        <span className={`self-center ml-2 font-bold text-xs text-[#20cc9e] dark:text-[#149adc]`}>Code:</span>
+                                                        <span className={`blur-sm hover:blur-none self-center ml-2 mr-2 font-bold text-xs dark:text-[#20cc9e] text-[#372963]`}>
+                                                            {parseInt(transaction.code._hex)}
                                                         </span>
                                                     </React.Fragment>
                                                 }
@@ -416,7 +415,7 @@ const Code = () => {
                                                     <button
                                                         disabled={transactionLoading}
                                                         onClick={() => {
-                                                            redeemPayment(transaction.code, parseInt(transaction.receiverId._hex))
+                                                            withdrawIssuerPayment(transaction.code, parseInt(transaction.receiverId._hex))
                                                         }} className={`w-full  p-2 self-center  bg-[#1e1d45] dark:bg-[#100d23] text-[#c24bbe] text-sm `}>
                                                         {transactionLoading &&
                                                             <Image
@@ -447,4 +446,4 @@ const Code = () => {
         </div >
     )
 }
-export default Code;
+export default Transactions;

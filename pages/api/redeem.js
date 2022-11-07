@@ -18,9 +18,7 @@ export default async function handler(req, res) {
 
 
   try {
-
     const gasLimit = (parseInt(gas) + 50000).toString();
-
     const tx = await forwarder.execute(req.body.request, req.body.signature, { gasLimit });
     console.log(`Sent meta-tx: ${tx.hash}`);
 
