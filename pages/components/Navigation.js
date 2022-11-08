@@ -3,16 +3,18 @@ import Image from "next/image"
 import { ConnectButton } from "@rainbow-me/rainbowkit"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/router"
-
+import { ToastContainer } from "react-toastify"
 
 const Navigation = ({ }) => {
     // Nextjs navigation
     const router = useRouter()
     // Theme Switch
     const [toggle, setToogle] = useState(true);
+    const [theme, setTheme] = useState("")
 
     useEffect(() => {
         if ((localStorage.getItem('theme') === 'dark')) {
+            setTheme("dark")
             console.log("It's dark..");
             document.documentElement.classList.add('dark');
             setToogle(false);
@@ -21,6 +23,8 @@ const Navigation = ({ }) => {
             console.log("It's light..");
             document.documentElement.classList.remove('dark');
             setToogle(true);
+            setTheme("light")
+
         }
         else if ((localStorage.getItem('theme') == undefined)) {
             console.log("No theme set.. making it dark");
@@ -40,7 +44,7 @@ const Navigation = ({ }) => {
                     onClick={() => {
                     }}
                 />
-
+                <ToastContainer theme={theme} />
                 <span className="group ml-auto my-auto text-sm mt-4 ">
                     <p className='cursor-pointer font-extralight group-hover:text-[#149adc] text-[white] text-sm' >Send
                         <svg className={`inline`} width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -2,6 +2,9 @@
 import '../styles/globals.css'
 import '@rainbow-me/rainbowkit/styles.css';
 import 'semantic-ui-css/semantic.min.css'
+import 'react-phone-number-input/style.css'
+import 'react-toastify/dist/ReactToastify.css';
+
 
 import {
   getDefaultWallets,

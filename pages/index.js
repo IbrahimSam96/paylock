@@ -2,6 +2,8 @@ import Head from 'next/head'
 import { useRouter } from 'next/router'
 import debounce from 'lodash.debounce';
 import Navigation from './components/Navigation';
+import { isValidPhoneNumber } from 'react-phone-number-input'
+import { ToastContainer, toast } from 'react-toastify';
 
 import {
   ConnectButton
@@ -12,6 +14,8 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import Image from 'next/image';
 import axios from 'axios'
 import { NumericFormat } from 'react-number-format';
+import PhoneInput from 'react-phone-number-input'
+
 import Avatar, { genConfig } from 'react-nice-avatar'
 import Select from 'react-select'
 import Accordion from '@mui/material/Accordion';
@@ -25,7 +29,8 @@ import PaylockAddressEth from '../eth.json'
 
 import MinimalForwarderPolygon from '../polygon.json';
 import MinimalForwarderMumbai from '../mumbai.json';
-import MinimalForwarderEth from '../eth.json'
+import MinimalForwarderEth from '../eth.json';
+
 
 import PayFactory from '../artifacts/contracts/PayFactory.sol/PayLock.json'
 
@@ -39,6 +44,7 @@ import PayFactory from '../artifacts/contracts/PayFactory.sol/PayLock.json'
 
 const Index = () => {
 
+  const toastId = useRef(null);
 
   // Nextjs navigation
   const router = useRouter()
@@ -65,7 +71,10 @@ const Index = () => {
   // Avatar config at config.current;
   const config = useRef(genConfig());
   // control views
-  const [screen, setScreen] = useState("SingleTransaction");
+  const [phone, setPhone] = useState();
+  const [message, setMessage] = useState("");
+  const [sendMessage, setSendMessage] = useState(false);
+
   const [addressReciever, setAddressReciever] = useState('');
   const [addressError, setAddressError] = useState(false);
   const [token, setToken] = useState(undefined);
@@ -264,7 +273,22 @@ const Index = () => {
         );
         await transaction.wait().then((res) => {
           setTransactionLoading(false);
-          // toast.update(toastId.current, { type: toast.TYPE.SUCCESS, autoClose: 5000, render: "Transaction Successful" });
+          if (sendMessage) {
+            axios.post('/api/text', {
+              to: phone,
+              message: message,
+              code: _code,
+              network: connection.chain?.name
+
+            }).then((res) => {
+
+            }).catch((err) => {
+              console.log(err)
+              toast.update(toastId.current, { type: toast.TYPE.ERROR, autoClose: 5000, render: "Failed to send text message", theme: localStorage.getItem('theme') });
+
+            })
+          }
+          toast.update(toastId.current, { type: toast.TYPE.SUCCESS, autoClose: 5000, render: "Transaction Successful", theme: localStorage.getItem('theme') });
         })
           .catch((err) => {
             setTransactionLoading(false);
@@ -327,7 +351,20 @@ const Index = () => {
             // resolves spinner and transaction state
             setTransactionLoading(false);
             console.log(res)
-            // toast.update(toastId.current, { type: toast.TYPE.SUCCESS, autoClose: 5000, render: "Transaction Successful" });
+            if (sendMessage) {
+              axios.post('/api/text', {
+                to: phone,
+                message: message,
+                code: _code,
+                network: connection.chain?.name
+              }).then((res) => {
+
+              }).catch((err) => {
+                console.log(err)
+                toast.update(toastId.current, { type: toast.TYPE.ERROR, autoClose: 5000, render: "Failed to send text message", theme: localStorage.getItem('theme') });
+              })
+            }
+            toast.update(toastId.current, { type: toast.TYPE.SUCCESS, autoClose: 5000, render: "Transaction Successful", theme: localStorage.getItem('theme') });
           })
             .catch((err) => {
               setTransactionLoading(false);
@@ -354,7 +391,7 @@ const Index = () => {
 
       <Navigation />
 
-      {!isSSR && screen == "SingleTransaction" &&
+      {!isSSR &&
         <span className={`fade self-start justify-self-auto sm:justify-self-center 
            col-start-1 col-end-8 row-start-3 row-end-4 sm:mx-4 p-4 mx-4
            grid grid-rows-[40px,min-content,30px,30px,40px,30px,auto,30px,min-content,70px] grid-cols-1
@@ -728,6 +765,52 @@ const Index = () => {
                     Single Payment (Withdrawable)
                   </span>
                 </span>
+
+                <span className={`mt-2 flex border-t-[1px] dark:border-[#20cc9e] border-[#372963]`}>
+                  <input
+                    type="checkbox"
+                    onChange={(value) => {
+                      console.log(value.target.checked)
+                      setSendMessage(value.target.checked)
+                    }}
+                  />
+
+                  <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center block m-2`}>
+                    Notify Recepient via Text Message :
+                  </span>
+                  <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2`}>
+
+                  </span>
+                </span>
+                {sendMessage &&
+                  <React.Fragment>
+                    <span className={`bg-slate-300`}>
+                      <PhoneInput
+                        defaultCountry='CA'
+                        className={`m-2`}
+                        placeholder="Enter reciever phone number"
+                        value={phone}
+                        onChange={(number) => {
+                          console.log(number)
+                          setPhone(number)
+                        }} />
+                    </span>
+
+                    <input
+                      maxLength={150}
+                      name="Message"
+                      placeholder='Enter Message Max (150 characters)'
+                      type="text"
+                      disabled={isDisconnected}
+                      className={`py-4 m-2 focus:outline-none font-extralight text-xs rounded w-full`}
+                      onChange={(change) => {
+                        setMessage(change.target.value);
+                      }}
+                    />
+                  </React.Fragment>
+                }
+
+
               </div>
             </AccordionDetails>
           </Accordion>

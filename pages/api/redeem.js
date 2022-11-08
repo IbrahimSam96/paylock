@@ -5,7 +5,6 @@ export default async function handler(req, res) {
   const { ethers } = require('ethers');
   const { DefenderRelayProvider, DefenderRelaySigner } = require('defender-relay-client/lib/ethers');
 
-  let PayFactory = require("../../artifacts/contracts/PayFactory.sol/PayLock.json");
   let Forwarder = require("../../contracts/forwarder")
 
   // Unpack request
