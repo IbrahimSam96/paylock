@@ -1,4 +1,4 @@
-// Local and Library css Imports 
+// Local and Library specific css Imports 
 import '../styles/globals.css'
 import '@rainbow-me/rainbowkit/styles.css';
 import 'semantic-ui-css/semantic.min.css'
@@ -23,7 +23,7 @@ import { publicProvider } from 'wagmi/providers/public';
 // TODO: add chain.mainnet, chain.polygon,
 const { chains, provider } = configureChains(
   [
-    chain.polygonMumbai],
+    chain.polygonMumbai, chain.goerli],
   [
     alchemyProvider({ apiKey: process.env.NEXT_PUBLIC_ALCHEMY_ID }),
     publicProvider()
@@ -45,7 +45,7 @@ const wagmiClient = createClient({
 function MyApp({ Component, pageProps }) {
   return (
     <WagmiConfig client={wagmiClient}>
-      <RainbowKitProvider showRecentTransactions={true} chains={chains} initialChain={chain.mainnet}>
+      <RainbowKitProvider showRecentTransactions={true} chains={chains} initialChain={chain.polygonMumbai}>
         <Component {...pageProps} />
       </RainbowKitProvider>
     </WagmiConfig>

@@ -12,6 +12,11 @@ export default async function handler(req, res) {
             from: '+18318513505',
             to: req.body.to
         })
-        .then(message => console.log(message.sid)).catch((err) => console.log(err));
+        .then(message => {
+            res.status(200).json({
+
+            })
+            console.log(message.sid)
+        }).catch((err) => console.log(err));
 
 }

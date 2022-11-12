@@ -1,39 +1,35 @@
+// Nextjs /React Imports 
 import Head from 'next/head'
+import Image from 'next/image';
 import { useRouter } from 'next/router'
-import debounce from 'lodash.debounce';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+// Components
 import Navigation from './components/Navigation';
-import { isValidPhoneNumber } from 'react-phone-number-input'
-import { ToastContainer, toast } from 'react-toastify';
-
+// Utils
+import axios from 'axios'
+import debounce from 'lodash.debounce';
+// Web3 Libraries
 import {
   ConnectButton
 } from '@rainbow-me/rainbowkit';
-import { useConnect, useNetwork, useBalance, useAccount, useSignTypedData, useSignMessage, useSigner, useContract, chain } from 'wagmi';
-import { ethers, providers } from 'ethers';
-import React, { useEffect, useRef, useState, useMemo } from 'react';
-import Image from 'next/image';
-import axios from 'axios'
+import { useNetwork, useBalance, useAccount, useSigner } from 'wagmi';
+import { ethers } from 'ethers';
+// UI Libraries 
 import { NumericFormat } from 'react-number-format';
 import PhoneInput from 'react-phone-number-input'
-
 import Avatar, { genConfig } from 'react-nice-avatar'
 import Select from 'react-select'
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-// Contract and Forwarder Addresses 
+import { toast } from 'react-toastify';
+// Contract ABI and Addresses 
+import PayFactory from '../artifacts/contracts/PayFactory.sol/PayLock.json'
 import PaylockAddressPolygon from '../polygon.json';
 import PaylockAddressMumbai from '../mumbai.json';
 import PaylockAddressEth from '../eth.json'
-
-import MinimalForwarderPolygon from '../polygon.json';
-import MinimalForwarderMumbai from '../mumbai.json';
-import MinimalForwarderEth from '../eth.json';
-
-
-import PayFactory from '../artifacts/contracts/PayFactory.sol/PayLock.json'
-
+// Colors
 // Background #131341
 // Component #100d23
 // Button #1e1d45
@@ -43,12 +39,12 @@ import PayFactory from '../artifacts/contracts/PayFactory.sol/PayLock.json'
 //  Light pink #c24bbe
 
 const Index = () => {
-
+  // useRefs
   const toastId = useRef(null);
-
+  // Avatar config 
+  const config = useRef(genConfig());
   // Nextjs navigation
   const router = useRouter()
-
   // Theme Switch
   const [toggle, setToogle] = useState(true);
   useEffect(() => {
@@ -68,13 +64,11 @@ const Index = () => {
   }, [])
   // Checking for window object to avoid errors using wagmi hooks .
   const [isSSR, setIsSSR] = useState(true);
-  // Avatar config at config.current;
-  const config = useRef(genConfig());
-  // control views
+  // Twillo Phone Message
   const [phone, setPhone] = useState();
   const [message, setMessage] = useState("");
   const [sendMessage, setSendMessage] = useState(false);
-
+  // Send variables
   const [addressReciever, setAddressReciever] = useState('');
   const [addressError, setAddressError] = useState(false);
   const [token, setToken] = useState(undefined);
@@ -83,7 +77,6 @@ const Index = () => {
     formattedValue: "",
     value: ""
   });
-
   const [fee, setFee] = useState("");
   const [feeUSD, setFeeUSD] = useState("");
   const [receivingAmount, setReceivingAmount] = useState("");
@@ -93,9 +86,9 @@ const Index = () => {
   const [tokenAllowance, setTokenAllowance] = useState(false);
   const [transactionLoading, setTransactionLoading] = useState(false);
   const [contractAddress, setContractAddress] = useState('');
-
+  // Hooks
   const { data: signer } = useSigner();
-  const { address, isConnecting, isDisconnected } = useAccount();
+  const { address, isDisconnected } = useAccount();
   const connection = useNetwork();
   const nativeBalance = useBalance({
     addressOrName: address,
@@ -104,7 +97,6 @@ const Index = () => {
     addressOrName: address,
     token: token?.address
   });
-
   // Available Token Options
   const tokenOptions = useMemo(() => {
     if (connection.chain?.name == "Ethereum") {
@@ -245,6 +237,7 @@ const Index = () => {
 
   }, [token, connection.chain, sendAmount])
 
+  // Send native or ERC20 transaction 
   const createtx = async () => {
     // Transaction Variables
     // Generates random code number 
@@ -281,14 +274,15 @@ const Index = () => {
               network: connection.chain?.name
 
             }).then((res) => {
+              toastId.current = toast("Text message sent", { type: toast.TYPE.SUCCESS, autoClose: 5000, theme: localStorage.getItem('theme') });
 
             }).catch((err) => {
               console.log(err)
-              toast.update(toastId.current, { type: toast.TYPE.ERROR, autoClose: 5000, render: "Failed to send text message", theme: localStorage.getItem('theme') });
+              toastId.current = toast("Failed to send text message", { type: toast.TYPE.ERROR, autoClose: 5000, theme: localStorage.getItem('theme') });
 
             })
           }
-          toast.update(toastId.current, { type: toast.TYPE.SUCCESS, autoClose: 5000, render: "Transaction Successful", theme: localStorage.getItem('theme') });
+          toastId.current = toast("Transaction Successful", { type: toast.TYPE.SUCCESS, autoClose: 5000, theme: localStorage.getItem('theme') });
         })
           .catch((err) => {
             setTransactionLoading(false);
@@ -358,17 +352,18 @@ const Index = () => {
                 code: _code,
                 network: connection.chain?.name
               }).then((res) => {
+                console.log("ASDasnasdas")
+                toastId.current = toast("Text message sent", { type: toast.TYPE.SUCCESS, autoClose: 5000, theme: localStorage.getItem('theme') });
 
               }).catch((err) => {
                 console.log(err)
-                toast.update(toastId.current, { type: toast.TYPE.ERROR, autoClose: 5000, render: "Failed to send text message", theme: localStorage.getItem('theme') });
+                toastId.current = toast("Failed to send text message", { type: toast.TYPE.ERROR, autoClose: 5000, theme: localStorage.getItem('theme') });
               })
             }
-            toast.update(toastId.current, { type: toast.TYPE.SUCCESS, autoClose: 5000, render: "Transaction Successful", theme: localStorage.getItem('theme') });
+            toastId.current = toast("Transaction Successful", { type: toast.TYPE.SUCCESS, autoClose: 5000, theme: localStorage.getItem('theme') });
           })
             .catch((err) => {
               setTransactionLoading(false);
-              // toast.update(toastId.current, { type: toast.TYPE.ERROR, autoClose: 5000, render: "Transaction Failed" });
               console.log(err)
             })
         }
@@ -391,8 +386,8 @@ const Index = () => {
 
       <Navigation />
 
-      {!isSSR &&
-        <span className={`fade self-start justify-self-auto sm:justify-self-center 
+      {!isSSR ?
+        <span className={`self-start justify-self-auto sm:justify-self-center 
            col-start-1 col-end-8 row-start-3 row-end-4 sm:mx-4 p-4 mx-4
            grid grid-rows-[40px,min-content,30px,30px,40px,30px,auto,30px,min-content,70px] grid-cols-1
             border-black border-[2px] bg-[aliceblue] dark:bg-[#100d23] rounded-2xl  `}>
@@ -418,7 +413,7 @@ const Index = () => {
           </span>
 
           <input
-            name="teext"
+            name="text"
             type="text"
             disabled={isDisconnected}
             className={`self-end py-2 focus:outline-none font-extralight text-xs rounded`}
@@ -904,6 +899,20 @@ const Index = () => {
               }
             </button>
           }
+        </span>
+        :
+        <span className={`self-start justify-self-auto sm:justify-self-center 
+        col-start-1 col-end-8 row-start-3 row-end-4 sm:mx-4 p-4 mx-4
+        grid grid-rows-[40px,min-content,30px,30px,40px,30px,auto,30px,min-content,70px] grid-cols-1
+         border-black border-[2px] bg-[aliceblue] dark:bg-[#100d23] rounded-2xl  `}>
+          <span className={`block bg-[grey] mx-2 w-[300px] h-[35px] rounded animate-pulse  `}>  </span>
+          <span className={`block bg-[grey] mx-2 w-[300px] h-[35px] rounded animate-pulse mt-8`}>  </span>
+
+          <span className={`block bg-[grey] mx-2 w-[300px] h-[35px] rounded animate-pulse mt-8 `}>  </span>
+          <span className={``}>  </span>
+          <span className={``}>  </span>
+          <span className={`block bg-[grey] mx-2 w-[300px] h-[35px] rounded animate-pulse mt-8 `}>  </span>
+
         </span>
       }
     </div >

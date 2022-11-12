@@ -29,7 +29,7 @@ const Navigation = ({ }) => {
         else if ((localStorage.getItem('theme') == undefined)) {
             console.log("No theme set.. making it dark");
         }
-    }, [])
+    }, [toggle])
 
     return (
         <span className={`col-start-1 col-end-8 mx-4 grid  `}>
