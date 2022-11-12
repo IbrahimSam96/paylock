@@ -88,7 +88,7 @@ const Index = () => {
   const [contractAddress, setContractAddress] = useState('');
   // Hooks
   const { data: signer } = useSigner();
-  const { address, isDisconnected } = useAccount();
+  const { address, isDisconnected, isConnected } = useAccount();
   const connection = useNetwork();
   const nativeBalance = useBalance({
     addressOrName: address,
@@ -815,27 +815,27 @@ const Index = () => {
               <ConnectButton />
             </span>
           }
-          {!isDisconnected && addressReciever == '' &&
+          {isConnected && addressReciever == '' &&
             <button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled >Enter address</button>
           }
-          {!isDisconnected && addressReciever != '' && !token &&
+          {isConnected && addressReciever != '' && !token &&
             <button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled >Select token</button>
           }
-          {!isDisconnected && addressReciever != '' && token && sendAmount.floatValue == undefined &&
+          {isConnected && addressReciever != '' && token && sendAmount.floatValue == undefined &&
             < button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled >Enter Amount</button>
           }
-          {!isDisconnected && addressReciever != '' && token && sendAmount.floatValue == 0 &&
+          {isConnected && addressReciever != '' && token && sendAmount.floatValue == 0 &&
             < button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled >Enter Amount</button>
           }
 
-          {!isDisconnected && addressReciever != '' && token && token.value != connection.chain?.nativeCurrency.symbol && Number(sendAmount.value) > Number(tokenBalance.data?.formatted) &&
+          {isConnected && addressReciever != '' && token && token.value != connection.chain?.nativeCurrency.symbol && Number(sendAmount.value) > Number(tokenBalance.data?.formatted) &&
             < button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled >{`Insufficient ${token.value}`} </button>
           }
-          {!isDisconnected && addressReciever != '' && token && token.value == connection.chain?.nativeCurrency.symbol && Number(sendAmount.value) > Number(nativeBalance.data.formatted) &&
+          {isConnected && addressReciever != '' && token && token.value == connection.chain?.nativeCurrency.symbol && Number(sendAmount.value) > Number(nativeBalance.data.formatted) &&
             < button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled > {`Insufficient ${token.value}`}</button>
           }
 
-          {!isDisconnected && addressReciever != '' && token && token.value == connection.chain?.nativeCurrency.symbol && Number(nativeBalance.data?.value) != 0 &&
+          {isConnected && addressReciever != '' && token && token.value == connection.chain?.nativeCurrency.symbol && Number(nativeBalance.data?.value) != 0 &&
             sendAmount.floatValue != undefined && sendAmount.floatValue != 0 && Number(sendAmount.value) <= Number(nativeBalance.data.formatted) &&
             <button
               disabled={transactionLoading}
@@ -860,7 +860,7 @@ const Index = () => {
             </button>
           }
 
-          {!isDisconnected && addressReciever != '' && token && token.value != connection.chain?.nativeCurrency.symbol && Number(tokenBalance.data?.value) != 0 &&
+          {isConnected && addressReciever != '' && token && token.value != connection.chain?.nativeCurrency.symbol && Number(tokenBalance.data?.value) != 0 &&
             sendAmount.floatValue != undefined && sendAmount.floatValue != 0 && Number(sendAmount.value) <= Number(tokenBalance.data.formatted) &&
             <button disabled={transactionLoading}
               onClick={() => {
