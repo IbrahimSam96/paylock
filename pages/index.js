@@ -377,7 +377,7 @@ const Index = () => {
 
   return (
 
-    <div className={` h-full min-h-screen w-full grid grid-cols-[repeat(7,1fr)] grid-rows-[100px,25px,auto,100px] ${!isSSR && connection.chain?.name == "Ethereum" && `bg-[#383843]`} bg-[#131341]`}>
+    <div className={` h-full min-h-screen w-full grid grid-cols-[repeat(7,1fr)] grid-rows-[100px,25px,auto,100px] bg-[#131341]`}>
       <Head>
         <title>Paylock</title>
         <meta name="Send crypto like web2" content="Send crpto " />
@@ -467,17 +467,38 @@ const Index = () => {
                   <span className={`text-[#20cc9e] text-xs sm:text-sm self-center `}>Balance:  </span>
                   {token && token?.value == connection.chain?.nativeCurrency.symbol &&
                     <>
-                      <span className={`text-[#149adc] text-xs sm:text-sm self-center ml-2 `}>
-                        {Number(nativeBalance.data?.formatted).toPrecision(5)}  {token.value}
-                      </span>
+                      {nativeBalance.data ?
+                        <span className={`text-[#149adc] text-xs sm:text-sm self-center ml-2 `}>
+                          {Number(nativeBalance.data?.formatted).toPrecision(5)}  {token.value}
+                        </span>
+                        :
+                        <Image
+                          className={`animate-spin`}
+                          src={'/loading.svg'}
+                          width={20}
+                          height={20}
+                        />
+
+                      }
+
                     </>
                   }
 
                   {token && token?.value != connection.chain?.nativeCurrency.symbol &&
                     <>
-                      <span className={`text-[#149adc] text-text-xs sm:text-sm self-center ml-2 `}>
-                        {Number(tokenBalance.data?.formatted).toPrecision(5)} {token.value}
-                      </span>
+                      {tokenBalance.data ?
+                        <span className={`text-[#149adc] text-text-xs sm:text-sm self-center ml-2 `}>
+                          {Number(tokenBalance.data?.formatted).toPrecision(5)} {token.value}
+                        </span>
+                        :
+                        <Image
+                          className={`animate-spin`}
+                          src={'/loading.svg'}
+                          width={20}
+                          height={20}
+                        />
+                      }
+
                     </>
                   }
                 </>
@@ -771,7 +792,7 @@ const Index = () => {
                   />
 
                   <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center block m-2`}>
-                    Notify Recepient via Text Message :
+                    Notify Recepient via Text Message
                   </span>
                   <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2`}>
 
