@@ -1,16 +1,37 @@
-
+// Nextjs and React
 import Image from "next/image"
-import { ConnectButton } from "@rainbow-me/rainbowkit"
+import React from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/router"
+// UI 
 import { ToastContainer } from "react-toastify"
+// WEB3
+import { useAccount, useNetwork } from 'wagmi';
+import { ethers } from 'ethers';
+import { ConnectButton } from "@rainbow-me/rainbowkit"
+// Contract ABI and Addreses
+import PaylockAddressMumbai from '../../mumbai.json';
+import PayFactory from '../../artifacts/contracts/PayFactory.sol/PayLock.json'
 
 const Navigation = ({ }) => {
+    // Hooks
+    const { address, isDisconnected, isConnected } = useAccount();
+    const connection = useNetwork();
+
     // Nextjs navigation
     const router = useRouter()
     // Theme Switch
     const [toggle, setToogle] = useState(true);
     const [theme, setTheme] = useState("")
+
+    // Available transactions
+    const [mumbaiRedeemablePayments, setMumbaiRedeemablePayments] = React.useState([]);
+
+    const [txCount, settxCount] = useState(0);
+
+    useEffect(() => {
+        settxCount(0)
+    }, [connection.chain])
 
     useEffect(() => {
         if ((localStorage.getItem('theme') === 'dark')) {
@@ -31,6 +52,48 @@ const Navigation = ({ }) => {
         }
     }, [toggle])
 
+    // Gets all redeemable payments on all chains
+    useEffect(() => {
+        if (isConnected) {
+            // gets PolygonMumbai Payments  
+            const getMumbaiRedeemablePayments = async () => {
+                const provider = new ethers.providers.JsonRpcProvider(`https://polygon-mumbai.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`);
+                const contract = new ethers.Contract(PaylockAddressMumbai.PaylockAddress, PayFactory.abi, provider);
+                const data = await contract.getRedeemablePayments(address);
+                setMumbaiRedeemablePayments(data);
+
+                if (data.length > 0) {
+                    let count = 0;
+                    data.map((tx) => {
+                        if (tx.state == 0) {
+                            count++
+                            settxCount(count)
+                        }
+                    })
+                }
+
+            }
+            getMumbaiRedeemablePayments();
+            // Mumbai Network
+            const provider = new ethers.providers.JsonRpcProvider(`https://polygon-mumbai.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`);
+            const contract = new ethers.Contract(PaylockAddressMumbai.PaylockAddress, PayFactory.abi, provider);
+            // Event Listener
+            contract.on('PaymentReedemed', () => {
+                getMumbaiRedeemablePayments();
+                contract.removeListener('PaymentReedemed');
+            })
+            contract.on('PaymentWithdrawn', () => {
+                getMumbaiRedeemablePayments();
+                contract.removeListener('PaymentWithdrawn');
+            })
+            contract.on('PaymentIssued', () => {
+                getMumbaiRedeemablePayments();
+                contract.removeListener('PaymentIssued');
+            })
+            // <<<<<<<<<<>>>>>>>>>>>>>> REST OF CHAINS <<<<<<<<<<>>>>>>>>>>>>>>
+        }
+    }, [connection.chain])
+
     return (
         <span className={`col-start-1 col-end-8 mx-4 grid  `}>
             {/* Logo & Navigation */}
@@ -45,14 +108,13 @@ const Navigation = ({ }) => {
                     }}
                 />
                 <ToastContainer theme={theme} />
-                <span className="group ml-auto my-auto text-sm mt-4 ">
+                <span className="group ml-auto my-auto text-sm mt-5 ">
                     <p className='cursor-pointer font-extralight group-hover:text-[#149adc] text-[white] text-sm' >Send
                         <svg className={`inline`} width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path className={`group-hover:fill-[#149adc]`} d="M12 15L12.3536 15.3536L12 15.7071L11.6464 15.3536L12 15ZM18.3536 9.35355L12.3536 15.3536L11.6464 14.6464L17.6464 8.64645L18.3536 9.35355ZM11.6464 15.3536L5.64645 9.35355L6.35355 8.64645L12.3536 14.6464L11.6464 15.3536Z" fill="white" />
                         </svg>
                     </p>
                     <span className={`hidden z-50 group-hover:block p-4  bg-[aliceblue] dark:bg-[#100d23] absolute rounded-xl border-t-2 border-[#149adc] `}>
-
                         <span className={`flex m-2 `}>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <rect x="18" y="15" width="4" height="4" rx="2" transform="rotate(90 18 15)" fill="#149adc" fillOpacity="0.25" stroke="#20cc9e" strokeWidth="1.2" />
@@ -97,13 +159,18 @@ const Navigation = ({ }) => {
                     </span>
                 </span>
 
-                <span className="mr-auto my-auto ml-4 text-sm ">
-                    <p className='cursor-pointer font-extralight hover:text-[#149adc] text-[white] text-sm'
-                        onClick={() => {
-                            router.push('/code')
-                        }} >
+                <span onClick={() => {
+                    router.push('/code')
+                }}
+                    className="flex mr-auto mt-[10px] ml-4 text-sm cursor-pointer ">
+                    <p className='m-auto font-extralight hover:text-[#149adc] text-[white] text-sm'
+                    >
                         Receive
                     </p>
+                    <p className={`${txCount !== 0 && `bg-[#F22F46] rounded-full border-gray-50 border-[1px]`} px-3 ml-2 my-2 font-bold text-white  `}>
+                        {isConnected && txCount !== 0 && txCount}
+                    </p>
+
                 </span>
 
             </span>

@@ -3,7 +3,7 @@ import {
     ConnectButton
 } from '@rainbow-me/rainbowkit';
 import { useConnect, useNetwork, useBalance, useAccount, useSignTypedData, useSignMessage, useSigner, useProvider, useContract, chain } from 'wagmi';
-import { ethers, providers } from 'ethers';
+import { ethers } from 'ethers';
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import Image from 'next/image';
 import axios from 'axios'
