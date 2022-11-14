@@ -639,7 +639,7 @@ const Transactions = () => {
                                                                 <Image
                                                                     className={``}
                                                                     alt={`ETH Network`}
-                                                                    src={`/$ETH.svg`}
+                                                                    src={`/ETH.svg`}
                                                                     width={20}
                                                                     height={20}
                                                                 />

@@ -436,7 +436,7 @@ const Index = () => {
             name="text"
             type="text"
             disabled={isDisconnected}
-            className={`self-end py-2 focus:outline-none font-extralight text-xs rounded`}
+            className={`self-end py-2 focus:outline-none font-bold text-xs rounded`}
             onChange={(change) => {
               const isAddress = ethers.utils.isAddress(change.target.value);
               if (!isAddress) {
@@ -460,7 +460,6 @@ const Index = () => {
             isDisabled={isDisconnected}
             className={`self-center ${isDisconnected && `opacity-50`}`}
             onChange={(change) => {
-              console.log(change)
               setToken(change);
             }}
 
@@ -473,7 +472,7 @@ const Index = () => {
                   width={20}
                   height={20}
                 />
-                <span className={` font-extralight text-sm self-center ml-2 `}>{tokenOption.value}</span>
+                <span className={` font-bold text-sm self-center ml-2 `}>{tokenOption.value}</span>
               </div>
             )}
 
@@ -698,7 +697,7 @@ const Index = () => {
           </span>
           <NumericFormat
             disabled={isDisconnected || !token}
-            className={`focus:outline-none font-extralight text-xs rounded `}
+            className={`focus:outline-none font-bold text-xs rounded `}
             allowNegative={false}
             value={sendAmount.value}
             thousandSeparator
@@ -765,10 +764,10 @@ const Index = () => {
                   <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center block m-2`}>
                     Fee:
                   </span>
-                  <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2 ml-[35px] `}>
+                  <span className={`font-bold text-xs text-[#c24bbe] self-center block m-2 ml-[35px] `}>
                     {sendAmount.floatValue != 0 && sendAmount.floatValue && fee}
                   </span>
-                  <span className={`font-extralight text-xs text-[#149adc] self-center  `}>
+                  <span className={`font-bold text-xs text-[#149adc] self-center  `}>
                     {sendAmount.floatValue != 0 && sendAmount.floatValue && feeUSD}
                   </span>
 
@@ -778,10 +777,10 @@ const Index = () => {
                   <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center block m-2`}>
                     Receiving:
                   </span>
-                  <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2 `}>
+                  <span className={`font-bold text-xs text-[#c24bbe] self-center block m-2 `}>
                     {sendAmount.floatValue != 0 && sendAmount.floatValue && receivingAmount}
                   </span>
-                  <span className={`font-extralight text-xs text-[#149adc] self-center block `}>
+                  <span className={`font-bold text-xs text-[#149adc] self-center block `}>
                     {sendAmount.floatValue != 0 && sendAmount.floatValue && receivingAmountUSD}
                   </span>
                 </span>

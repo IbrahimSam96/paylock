@@ -4,6 +4,7 @@ import '@rainbow-me/rainbowkit/styles.css';
 import 'react-phone-number-input/style.css'
 import 'react-toastify/dist/ReactToastify.css';
 
+import { Analytics } from '@vercel/analytics/react';
 
 import {
   getDefaultWallets,
@@ -46,6 +47,7 @@ function MyApp({ Component, pageProps }) {
     <WagmiConfig client={wagmiClient}>
       <RainbowKitProvider showRecentTransactions={true} chains={chains} initialChain={chain.polygonMumbai}>
         <Component {...pageProps} />
+        <Analytics />
       </RainbowKitProvider>
     </WagmiConfig>
 

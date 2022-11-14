@@ -196,7 +196,7 @@ contract PayLock is ERC2771Context, Ownable {
                 }
                 // IF USD value (0.5%) a of transaction  equals more than 50USD, cap fee at 50 USD
                 if (
-                    (_tokenAmount / 200).getConversionRate(i_priceFeedUSDC) >=
+                    (_tokenAmount).getConversionRate(i_priceFeedUSDC) / 200 >=
                     MAXIMUM_FEE_USD
                 ) {
                     newPayment.value =
