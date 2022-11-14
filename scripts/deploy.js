@@ -1,102 +1,179 @@
-const hre = require("hardhat");
-const fs = require('fs');
-const { DefenderRelayProvider, DefenderRelaySigner } = require('defender-relay-client/lib/ethers');
-require('dotenv').config();
+const {
+    DefenderRelayProvider,
+    DefenderRelaySigner,
+} = require('defender-relay-client/lib/ethers')
+const { ethers } = require('hardhat')
+const { writeFileSync } = require('fs')
 
 async function main() {
+    require('dotenv').config()
 
-  const chainId = hre.network.config.chainId;
+    const chainId = hre.network.config.chainId;
+    let credentials;
+    // Polygon(Matic) Mumbai testnet <3
+    if (chainId == 80001) {
+        credentials = { apiKey: process.env.NEXT_PUBLIC_APIKey, apiSecret: process.env.NEXT_PUBLIC_APISecret };
+    }
+    // Eth Goerli <3
+    if (chainId == 5) {
+        credentials = { apiKey: process.env.NEXT_PUBLIC_APIKey_Goerli, apiSecret: process.env.NEXT_PUBLIC_APISecret_Goerli };
+    }
+    const provider = new DefenderRelayProvider(credentials);
+    const signer = new DefenderRelaySigner(credentials, provider, { speed: 'fast' });
 
-  const credentials = { apiKey: process.env.NEXT_PUBLIC_APIKey, apiSecret: process.env.NEXT_PUBLIC_APISecret };
-  const provider = new DefenderRelayProvider(credentials);
-  const signer = new DefenderRelaySigner(credentials, provider, { speed: 'fast' });
+    const Forwarder = await ethers.getContractFactory('MinimalForwarder')
+    const forwarder = await Forwarder.connect(signer)
+        .deploy()
+        .then((f) => f.deployed()
+        )
 
-  const PaylockContract = await hre.ethers.getContractFactory("PayLock");
+    const PaylockContract = await hre.ethers.getContractFactory("PayLock");
 
-  let MinimalForwarder = ''
-  let AggregatorNative = ''
-  let AggregatorUSDC = ''
+    let MinimalForwarder = forwarder.address
+    let AggregatorNative = ''
+    let AggregatorUSDC = ''
 
-  let AggregatorUSDT = ''
-  let AggregatorDAI = ''
-  let AggregatordBTC = ''
-  let USDCAddress = ''
-  let USDTAddress = ''
-  let DAIAddress = ''
-  let WBTCAddress = ''
+    let AggregatorUSDT = ''
+    let AggregatorDAI = ''
+    let AggregatordBTC = ''
+    let USDCAddress = ''
+    let USDTAddress = ''
+    let DAIAddress = ''
+    let WBTCAddress = ''
 
+    // Polygon(Matic) Mumbai testnet <3
+    if (chainId == 80001) {
+        AggregatorNative = '0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada'
+        AggregatorUSDC = '0x572dDec9087154dC5dfBB1546Bb62713147e0Ab0'
+        AggregatorUSDT = '0x92C09849638959196E976289418e5973CC96d645'
+        AggregatorDAI = '0x0FCAa9c899EC5A91eBc3D5Dd869De833b06fB046'
+        AggregatordBTC = '0x007A22900a3B98143368Bd5906f8E17e9867581b'
+        USDCAddress = '0xe11A86849d99F524cAC3E7A0Ec1241828e332C62'
+        USDTAddress = '0xA02f6adc7926efeBBd59Fd43A84f4E0c0c91e832'
+        DAIAddress = '0xd393b1E02dA9831Ff419e22eA105aAe4c47E1253'
+        WBTCAddress = '0x0d787a4a1548f673ed375445535a6c7A1EE56180'
+    }
+    // Eth Mainnet <3
+    if (chainId == 1) {
+        AggregatorNative = '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419'
+        AggregatorUSDC = '0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6'
+        AggregatorUSDT = '0x3E7d1eAB13ad0104d2750B8863b489D65364e32D'
+        AggregatorDAI = '0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9'
+        AggregatordBTC = '0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c'
+        USDCAddress = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
+        USDTAddress = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
+        DAIAddress = '0x6B175474E89094C44Da98b954EedeAC495271d0F'
+        WBTCAddress = '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599'
+    }
+    // Eth Goerli <3 NOTE USDT AGGREGATOR ON GOERLI NOT AVAILABLE 
+    if (chainId == 5) {
+        AggregatorNative = '0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e'
+        AggregatorUSDC = '0xAb5c49580294Aff77670F839ea425f5b78ab3Ae7'
+        AggregatorUSDT = '0xAb5c49580294Aff77670F839ea425f5b78ab3Ae7'
+        AggregatorDAI = '0x0d79df66BE487753B02D015Fb622DED7f0E9798d'
+        AggregatordBTC = '0xA39434A63A52E749F02807ae27335515BA4b07F7'
+        USDCAddress = '0x2f3A40A3db8a7e3D09B0adfEfbCe4f6F81927557'
+        USDTAddress = '0x509Ee0d083DdF8AC028f2a56731412edD63223B9'
+        DAIAddress = '0x73967c6a0904aA032C103b4104747E88c566B1A2'
+        WBTCAddress = '0xC04B0d3107736C32e19F1c62b2aF67BE61d63a05'
+    }
+    // Polygon(Matic) Mainnet <3
+    if (chainId == 137) {
+        AggregatorNative = '0xAB594600376Ec9fD91F8e885dADF0CE036862dE0'
+        AggregatorUSDC = '0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7'
+        AggregatorUSDT = '0x0A6513e40db6EB1b165753AD52E80663aeA50545'
+        AggregatorDAI = '0x4746DeC9e833A82EC7C2C1356372CcF2cfcD2F3D'
+        AggregatordBTC = '0xDE31F8bFBD8c84b5360CFACCa3539B938dd78ae6'
+        USDCAddress = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174'
+        USDTAddress = '0xc2132D05D31c914a87C6611C10748AEb04B58e8F'
+        DAIAddress = '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063'
+        WBTCAddress = '0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6'
 
-  // Polygon(Matic) Mumbai testnet <3
-  if (chainId == 80001) {
-    MinimalForwarder = '0x25b56ddb6ffbf355ba3f5299aaac38150f469782'
-    AggregatorNative = '0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada'
-    AggregatorUSDC = '0x572dDec9087154dC5dfBB1546Bb62713147e0Ab0'
-    AggregatorUSDT = '0x92C09849638959196E976289418e5973CC96d645'
-    AggregatorDAI = '0x0FCAa9c899EC5A91eBc3D5Dd869De833b06fB046'
-    AggregatordBTC = '0x007A22900a3B98143368Bd5906f8E17e9867581b'
-    USDCAddress = '0xe11A86849d99F524cAC3E7A0Ec1241828e332C62'
-    USDTAddress = '0xA02f6adc7926efeBBd59Fd43A84f4E0c0c91e832'
-    DAIAddress = '0xd393b1E02dA9831Ff419e22eA105aAe4c47E1253'
-    WBTCAddress = '0x0d787a4a1548f673ed375445535a6c7A1EE56180'
-  }
-  // Eth Mainnet <3
-  if (chainId == 1) {
-    MinimalForwarder = ''
-    AggregatorNative = '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419'
-    AggregatorUSDC = '0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6'
-    AggregatorUSDT = '0x3E7d1eAB13ad0104d2750B8863b489D65364e32D'
-    AggregatorDAI = '0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9'
-    AggregatordBTC = '0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c'
-    USDCAddress = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
-    USDTAddress = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
-    DAIAddress = '0x6B175474E89094C44Da98b954EedeAC495271d0F'
-    WBTCAddress = '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599'
-  }
-  // Polygon(Matic) Mainnet <3
-  if (chainId == 137) {
-    MinimalForwarder = ''
-    AggregatorNative = '0xAB594600376Ec9fD91F8e885dADF0CE036862dE0'
-    AggregatorUSDC = '0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7'
-    AggregatorUSDT = '0x0A6513e40db6EB1b165753AD52E80663aeA50545'
-    AggregatorDAI = '0x4746DeC9e833A82EC7C2C1356372CcF2cfcD2F3D'
-    AggregatordBTC = '0xDE31F8bFBD8c84b5360CFACCa3539B938dd78ae6'
-    USDCAddress = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174'
-    USDTAddress = '0xc2132D05D31c914a87C6611C10748AEb04B58e8F'
-    DAIAddress = '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063'
-    WBTCAddress = '0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6'
+    }
 
-  }
-  const Paylock = await PaylockContract.connect(signer).deploy(
-    MinimalForwarder,
-    AggregatorNative, AggregatorUSDC, AggregatorUSDT,
-    AggregatorDAI, AggregatordBTC, USDCAddress, USDTAddress, DAIAddress, WBTCAddress
-  );
+    const Paylock = await PaylockContract.connect(signer).deploy(
+        MinimalForwarder,
+        AggregatorNative, AggregatorUSDC, AggregatorUSDT,
+        AggregatorDAI, AggregatordBTC, USDCAddress, USDTAddress, DAIAddress, WBTCAddress
+    );
 
-  await Paylock.deployed();
-  console.log("Paylock deployed to:", Paylock.address);
+    await Paylock.deployed();
 
-  if (chainId == 80001) {
-    fs.writeFileSync('./mumbai.js', `
-    export const mumbaiAddress = "${Paylock.address}"
-    `)
-  }
-  if (chainId == 137) {
-    fs.writeFileSync('./polygon.js', `
-    export const PolygonAddress = "${Paylock.address}"
-    `)
-  }
-
-  if (chainId == 1) {
-    fs.writeFileSync('./eth.js', `
-    export const EthAddress = "${Paylock.address}"
-    `)
-  }
-
+    // Polygon(Matic) Mumbai testnet <3
+    if (chainId == 80001) {
+        writeFileSync(
+            'mumbai.json',
+            JSON.stringify(
+                {
+                    MinimalForwarder: forwarder.address,
+                    PaylockAddress: Paylock.address,
+                },
+                null,
+                2
+            )
+        )
+        console.log(
+            ` Deployed on Mumbai: MinimalForwarder: ${forwarder.address}\n Paylock: ${Paylock.address}`
+        )
+    }
+    // Eth Mainnet <3
+    if (chainId == 1) {
+        writeFileSync(
+            'eth.json',
+            JSON.stringify(
+                {
+                    MinimalForwarder: forwarder.address,
+                    PaylockAddress: Paylock.address,
+                },
+                null,
+                2
+            )
+        )
+        console.log(
+            ` Deployed on Mainnet: MinimalForwarder: ${forwarder.address}\n Paylock: ${Paylock.address}`
+        )
+    }
+    // Eth Goerli <3
+    if (chainId == 5) {
+        writeFileSync(
+            'goerli.json',
+            JSON.stringify(
+                {
+                    MinimalForwarder: forwarder.address,
+                    PaylockAddress: Paylock.address,
+                },
+                null,
+                2
+            )
+        )
+        console.log(
+            ` Deployed on goerli: MinimalForwarder: ${forwarder.address}\n Paylock: ${Paylock.address}`
+        )
+    }
+    // Polygon(Matic) Mainnet <3
+    if (chainId == 137) {
+        writeFileSync(
+            'polygon.json',
+            JSON.stringify(
+                {
+                    MinimalForwarder: forwarder.address,
+                    PaylockAddress: Paylock.address,
+                },
+                null,
+                2
+            )
+        )
+        console.log(
+            ` Deployed on Polygon: MinimalForwarder: ${forwarder.address}\n Paylock: ${Paylock.address}`
+        )
+    }
 }
 
-main()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+if (require.main === module) {
+    main()
+        .then(() => process.exit(0))
+        .catch((error) => {
+            console.error(error)
+            process.exit(1)
+        })
+}

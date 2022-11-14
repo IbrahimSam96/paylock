@@ -29,6 +29,8 @@ import PayFactory from '../artifacts/contracts/PayFactory.sol/PayLock.json'
 import PaylockAddressPolygon from '../polygon.json';
 import PaylockAddressMumbai from '../mumbai.json';
 import PaylockAddressEth from '../eth.json'
+import PaylockAddressGoerli from "../goerli.json"
+
 // Colors
 // Background #131341
 // Component #100d23
@@ -142,6 +144,20 @@ const Index = () => {
         { value: 'WBTC', label: 'WBTC', svg: 'WBTC', address: "0x0d787a4a1548f673ed375445535a6c7A1EE56180" },
       ];
     }
+    else if (connection.chain?.name == 'Goerli') {
+      return [
+        {
+          value: connection.chain?.nativeCurrency.symbol,
+          label: connection.chain?.nativeCurrency.symbol,
+          svg: connection.chain?.nativeCurrency.symbol,
+          address: undefined
+        },
+        { value: 'DAI', label: 'DAI', svg: 'DAI', address: "0x73967c6a0904aA032C103b4104747E88c566B1A2" },
+        { value: 'USDT', label: 'USDT', svg: 'USDT', address: "0x509Ee0d083DdF8AC028f2a56731412edD63223B9" },
+        { value: 'USDC', label: 'USDC', svg: 'USDC', address: "0x2f3A40A3db8a7e3D09B0adfEfbCe4f6F81927557" },
+        { value: 'WBTC', label: 'WBTC', svg: 'WBTC', address: "0xC04B0d3107736C32e19F1c62b2aF67BE61d63a05" },
+      ];
+    }
   }, [connection.chain]);
 
   // global window check 
@@ -156,13 +172,16 @@ const Index = () => {
       setToken(tokenOptions[0])
     }
     if (connection.chain?.name == "Ethereum") {
-      setContractAddress(PaylockAddressEth.PaylockAddressEth)
+      setContractAddress(PaylockAddressEth.PaylockAddress)
     }
     if (connection.chain?.name == 'Polygon') {
-      setContractAddress(PaylockAddressPolygon.PaylockAddressPolygon)
+      setContractAddress(PaylockAddressPolygon.PaylockAddress)
     }
     if (connection.chain?.name == 'Polygon Mumbai') {
       setContractAddress(PaylockAddressMumbai.PaylockAddress)
+    }
+    if (connection.chain?.name == 'Goerli') {
+      setContractAddress(PaylockAddressGoerli.PaylockAddress)
     }
   }, [connection.chain, tokenOptions]);
 
@@ -216,14 +235,15 @@ const Index = () => {
   // Checks allowance 
   useEffect(() => {
     if (token?.address && sendAmount.value) {
-      console.log('Checking allowance')
+      console.log('Checking allowance for inputted amount')
+
       const checkAllowance = async () => {
         const IERC20ABI = require("../artifacts/@openzeppelin/contracts/token/ERC20/IERC20.sol/IERC20.json");
         let erc20Contract = new ethers.Contract(token.address, IERC20ABI.abi, signer);
 
         let data = await erc20Contract.allowance(address, contractAddress);
         console.log(parseInt(data._hex) / 1e18)
-        // If allowance is smaller 
+        // If allowance is smaller set allowance true
         if (parseInt(data._hex) < (sendAmount.floatValue * 1e18)) {
           setTokenAllowance(true);
         }
@@ -882,7 +902,7 @@ const Index = () => {
           }
 
           {isConnected && addressReciever != '' && token && token.value != connection.chain?.nativeCurrency.symbol && Number(tokenBalance.data?.value) != 0 &&
-            sendAmount.floatValue != undefined && sendAmount.floatValue != 0 && Number(sendAmount.value) <= Number(tokenBalance.data.formatted) &&
+            sendAmount.floatValue != undefined && sendAmount.floatValue != 0 && Number(sendAmount.value) <= Number(tokenBalance.data?.formatted) &&
             <button disabled={transactionLoading}
               onClick={() => {
                 createtx();

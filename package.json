@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "deploy_Mumbai": "npx hardhat run scripts/deploys.js --network polygonMumbai "
+    "deploy_Mumbai": "npx hardhat run scripts/deploy.js --network polygonMumbai ",
+    "deploy_Goerli": "npx hardhat run scripts/deploy.js --network goerli "
   },
   "dependencies": {
     "@chainlink/contracts": "^0.4.2",

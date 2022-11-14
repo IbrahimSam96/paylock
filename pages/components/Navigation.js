@@ -11,6 +11,7 @@ import { ethers } from 'ethers';
 import { ConnectButton } from "@rainbow-me/rainbowkit"
 // Contract ABI and Addreses
 import PaylockAddressMumbai from '../../mumbai.json';
+import PaylockAddressGoerli from "../../goerli.json"
 import PayFactory from '../../artifacts/contracts/PayFactory.sol/PayLock.json'
 
 const Navigation = ({ }) => {
@@ -26,9 +27,10 @@ const Navigation = ({ }) => {
 
     // Available transactions
     const [mumbaiRedeemablePayments, setMumbaiRedeemablePayments] = React.useState([]);
+    const [goerliRedeemablePayments, setGoerliRedeemablePayments] = React.useState([]);
 
     const [txCount, settxCount] = useState(0);
-
+    // Ensure TxCount is reset
     useEffect(() => {
         settxCount(0)
     }, [connection.chain])
@@ -54,7 +56,8 @@ const Navigation = ({ }) => {
 
     // Gets all redeemable payments on all chains
     useEffect(() => {
-        if (isConnected) {
+
+        if (!isDisconnected) {
             // gets PolygonMumbai Payments  
             const getMumbaiRedeemablePayments = async () => {
                 const provider = new ethers.providers.JsonRpcProvider(`https://polygon-mumbai.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID}`);
@@ -71,7 +74,6 @@ const Navigation = ({ }) => {
                         }
                     })
                 }
-
             }
             getMumbaiRedeemablePayments();
             // Mumbai Network
@@ -79,20 +81,58 @@ const Navigation = ({ }) => {
             const contract = new ethers.Contract(PaylockAddressMumbai.PaylockAddress, PayFactory.abi, provider);
             // Event Listener
             contract.on('PaymentReedemed', () => {
+                console.log("Event Triggered")
                 getMumbaiRedeemablePayments();
                 contract.removeListener('PaymentReedemed');
-            })
-            contract.on('PaymentWithdrawn', () => {
-                getMumbaiRedeemablePayments();
-                contract.removeListener('PaymentWithdrawn');
             })
             contract.on('PaymentIssued', () => {
                 getMumbaiRedeemablePayments();
                 contract.removeListener('PaymentIssued');
             })
+            contract.on('PaymentWithdrawn', () => {
+                getMumbaiRedeemablePayments();
+                contract.removeListener('PaymentWithdrawn');
+            })
             // <<<<<<<<<<>>>>>>>>>>>>>> REST OF CHAINS <<<<<<<<<<>>>>>>>>>>>>>>
+            // gets Goerli Payments  
+            const getGoerliRedeemablePayments = async () => {
+                const provider = new ethers.providers.JsonRpcProvider(`https://eth-goerli.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID_GOERLI}`);
+                const contract = new ethers.Contract(PaylockAddressGoerli.PaylockAddress, PayFactory.abi, provider);
+                const data = await contract.getRedeemablePayments(address);
+                console.log(data)
+                if (data.length > 0) {
+                    let count = 0;
+                    data.map((tx) => {
+                        if (tx.state == 0) {
+                            count++
+                            settxCount(count)
+                        }
+                    })
+                }
+                setGoerliRedeemablePayments(data);
+            }
+            getGoerliRedeemablePayments();
+            // Goerli Network
+            const providerGoerli = new ethers.providers.JsonRpcProvider(`https://eth-goerli.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_ID_GOERLI}`);
+            const contractGoerli = new ethers.Contract(PaylockAddressGoerli.PaylockAddress, PayFactory.abi, providerGoerli);
+            // Event Listener
+            contractGoerli.on('PaymentReedemed', () => {
+                console.log("Event Triggered")
+                getGoerliRedeemablePayments();
+                contract.removeListener('PaymentReedemed');
+            })
+
+            contractGoerli.on('PaymentIssued', () => {
+                getGoerliRedeemablePayments();
+                contract.removeListener('PaymentIssued');
+            })
+            contractGoerli.on('PaymentWithdrawn', () => {
+                getGoerliRedeemablePayments();
+                contract.removeListener('PaymentWithdrawn');
+            })
         }
-    }, [connection.chain])
+
+    }, [])
 
     return (
         <span className={`col-start-1 col-end-8 mx-4 grid  `}>

@@ -10,7 +10,15 @@ export default async function handler(req, res) {
   // Unpack request
   const { to, from, value, gas, nonce, data } = req.body.request;
   // Initialize Relayer
-  const credentials = { apiKey: process.env.NEXT_PUBLIC_APIKey, apiSecret: process.env.NEXT_PUBLIC_APISecret };
+  let credentials;
+
+  if (req.body.chainID == 80001) {
+    credentials = { apiKey: process.env.NEXT_PUBLIC_APIKey, apiSecret: process.env.NEXT_PUBLIC_APISecret };
+  }
+  if (req.body.chainID == 5) {
+    credentials = { apiKey: process.env.NEXT_PUBLIC_APIKey_Goerli, apiSecret: process.env.NEXT_PUBLIC_APISecret_Goerli };
+  }
+
   const provider = new DefenderRelayProvider(credentials);
   const signer = new DefenderRelaySigner(credentials, provider, { speed: 'fast' });
   const forwarder = new ethers.Contract(req.body.forwarder, Forwarder.ForwarderAbi, signer);

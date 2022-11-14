@@ -200,7 +200,7 @@ contract PayLock is ERC2771Context, Ownable {
                     MAXIMUM_FEE_USD
                 ) {
                     newPayment.value =
-                        _tokenAmount -
+                        _tokenAmount.getConversionRate(i_priceFeedUSDC) -
                         MAXIMUM_FEE_USD.getMaxRate(i_priceFeedUSDC);
                     s_PaySafeTokenBalances[i_USDCAddress] += MAXIMUM_FEE_USD
                         .getMaxRate(i_priceFeedUSDC);
@@ -228,7 +228,7 @@ contract PayLock is ERC2771Context, Ownable {
                     MAXIMUM_FEE_USD
                 ) {
                     newPayment.value =
-                        _tokenAmount -
+                        _tokenAmount.getConversionRate(i_priceFeedUSDT) -
                         MAXIMUM_FEE_USD.getMaxRate(i_priceFeedUSDT);
                     s_PaySafeTokenBalances[i_USDTAddress] += MAXIMUM_FEE_USD
                         .getMaxRate(i_priceFeedUSDT);
@@ -256,7 +256,7 @@ contract PayLock is ERC2771Context, Ownable {
                     MAXIMUM_FEE_USD
                 ) {
                     newPayment.value =
-                        _tokenAmount -
+                        _tokenAmount.getConversionRate(i_priceFeedDAI) -
                         MAXIMUM_FEE_USD.getMaxRate(i_priceFeedDAI);
                     s_PaySafeTokenBalances[i_DAIAddress] += MAXIMUM_FEE_USD
                         .getMaxRate(i_priceFeedDAI);
@@ -284,7 +284,7 @@ contract PayLock is ERC2771Context, Ownable {
                     MAXIMUM_FEE_USD
                 ) {
                     newPayment.value =
-                        _tokenAmount -
+                        _tokenAmount.getConversionRate(i_priceFeedBTC) -
                         MAXIMUM_FEE_USD.getMaxRate(i_priceFeedBTC);
                     s_PaySafeTokenBalances[i_WBTCAddress] += MAXIMUM_FEE_USD
                         .getMaxRate(i_priceFeedBTC);
