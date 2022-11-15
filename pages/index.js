@@ -764,6 +764,17 @@ const Index = () => {
                   <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center block m-2`}>
                     Fee:
                   </span>
+
+                  <div className={`group self-center`}>
+                    <span className={`bg-[#100d23] text-[#20cc9e] text-sm p-3 rounded hidden group-hover:block absolute text-center py-2 px-8 -mt-8 ml-3 z-50`}>( 0.5% of transaction value - Capped at $50USD ) </span>
+
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="12" cy="12" r="9" fill="#7E869E" fill-opacity="0.25" stroke="white" stroke-width="1.2" />
+                      <circle cx="12" cy="18" r="0.6" fill="#20CC9E" stroke="white" stroke-width="0.2" />
+                      <path d="M12 16V15.1432C12 14.429 12.357 13.762 12.9512 13.3659L13.5497 12.9669C14.4558 12.3628 15 11.3459 15 10.2569V10C15 8.34315 13.6569 7 12 7V7C10.3431 7 9 8.34315 9 10V10" stroke="#20CC9E" stroke-width="1.2" />
+                    </svg>
+                  </div>
+
                   <span className={`font-bold text-xs text-[#c24bbe] self-center block m-2 ml-[35px] `}>
                     {sendAmount.floatValue != 0 && sendAmount.floatValue && fee}
                   </span>
