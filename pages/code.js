@@ -14,7 +14,7 @@ import Avatar, { genConfig } from 'react-nice-avatar'
 import { toast } from 'react-toastify';
 // Components 
 import Navigation from './components/Navigation';
-
+import CodeInput from "./components/Input"
 
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
@@ -763,28 +763,8 @@ const Code = () => {
                                                     </span>
                                                     {transaction.state == 0 &&
                                                         <React.Fragment>
-                                                            <span className={`self-center m-4 flex`}>
-                                                                <span className={`self-center font-bold text-xs text-[#20cc9e] dark:text-[#149adc]`}>Enter 4 digit Code:</span>
-                                                                <NumericFormat
-                                                                    key={parseInt(transaction.receiverId._hex)}
-                                                                    disabled={isDisconnected}
-                                                                    className={`focus:outline-none font-extralight text-xs rounded ml-2 `}
-                                                                    allowNegative={false}
-                                                                    value={code}
-                                                                    onValueChange={
-                                                                        debounce((values) => {
 
-                                                                            if (values.floatValue != 0 && values.floatValue) {
-                                                                                // only if VALUE IS NOT 0 AND !undefined
-                                                                                // Sets Receiving Amount and Fee and calculates usdValue 
-                                                                                setCode(values.value)
-                                                                            }
-
-                                                                        }, 500)
-
-                                                                    }
-                                                                />
-                                                            </span>
+                                                            <CodeInput setCode={setCode} />
 
                                                             <button
                                                                 key={parseInt(transaction.receiverId._hex)}

@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Head from 'next/head'
 
 // web3 libraries 
-import { useNetwork, useBalance, useAccount, useSigner, useProvider, useContract, chain } from 'wagmi';
+import { useNetwork, useAccount, useSigner } from 'wagmi';
 import { ethers } from 'ethers';
 // helpers 
 import debounce from 'lodash.debounce';
@@ -17,7 +17,9 @@ import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-
+// Components
+import Navigation from './components/Navigation';
+import CodeInput from './components/Input';
 // Contract and Forwarder Addresses 
 import PaylockAddressPolygon from '../polygon.json';
 import PaylockAddressMumbai from '../mumbai.json';
@@ -30,7 +32,6 @@ import MinimalForwarderEth from '../eth.json'
 import MinimalForwarderGoerli from "../goerli.json";
 
 import PayFactory from '../artifacts/contracts/PayFactory.sol/PayLock.json'
-import Navigation from './components/Navigation';
 
 const Transactions = () => {
     // useRefs
@@ -44,7 +45,7 @@ const Transactions = () => {
     const [forwarder, setForwarder] = useState('');
 
     const [isSSR, setIsSSR] = useState(true);
-    const { address, isConnecting, isDisconnected, isConnected } = useAccount();
+    const { address, isDisconnected, isConnected } = useAccount();
     const connection = useNetwork();
 
     const { data: signer } = useSigner();
@@ -116,7 +117,7 @@ const Transactions = () => {
         }
         if (connection.chain?.name == 'Goerli') {
             setContractAddress(PaylockAddressGoerli.PaylockAddress)
-            setForwarder(PaylockAddressGoerli.MinimalForwarder)
+            setForwarder(MinimalForwarderGoerli.MinimalForwarder)
         }
     }, [connection.chain]);
 
@@ -764,27 +765,8 @@ const Transactions = () => {
                                                     </span>
                                                     {transaction.state == 0 &&
                                                         <React.Fragment>
-                                                            <span className={`self-center m-4 flex`}>
-                                                                <span className={`self-center font-bold text-xs text-[#20cc9e] dark:text-[#149adc]`}>Enter 4 digit Code:</span>
-                                                                <NumericFormat
-                                                                    disabled={isDisconnected}
-                                                                    className={`focus:outline-none font-extralight text-xs rounded ml-2 `}
-                                                                    allowNegative={false}
-                                                                    value={code}
-                                                                    onValueChange={
-                                                                        debounce((values) => {
 
-                                                                            if (values.floatValue != 0 && values.floatValue) {
-                                                                                // only if VALUE IS NOT 0 AND !undefined
-                                                                                // Sets Receiving Amount and Fee and calculates usdValue 
-                                                                                setCode(values.value)
-                                                                            }
-
-                                                                        }, 500)
-
-                                                                    }
-                                                                />
-                                                            </span>
+                                                            <CodeInput setCode={setCode} />
 
                                                             <button
                                                                 disabled={transactionLoading}
