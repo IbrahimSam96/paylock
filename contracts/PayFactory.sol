@@ -196,19 +196,15 @@ contract PayLock is ERC2771Context, Ownable {
                 }
                 // IF USD value (0.5%) a of transaction  equals more than 50USD, cap fee at 50 USD
                 if (
-                    (_tokenAmount).getConversionRate(i_priceFeedUSDC) / 200 >=
+                    (_tokenAmount / 200).getConversionRate(i_priceFeedUSDC) >=
                     MAXIMUM_FEE_USD
                 ) {
                     newPayment.value =
-                        _tokenAmount.getConversionRate(i_priceFeedUSDC) -
+                        _tokenAmount -
                         MAXIMUM_FEE_USD.getMaxRate(i_priceFeedUSDC);
                     s_PaySafeTokenBalances[i_USDCAddress] += MAXIMUM_FEE_USD
                         .getMaxRate(i_priceFeedUSDC);
-                }
-                if (
-                    _tokenAmount.getConversionRate(i_priceFeedUSDC) <
-                    MAXIMUM_FEE_USD
-                ) {
+                } else {
                     newPayment.value = _tokenAmount - _tokenAmount / 200;
                     s_PaySafeTokenBalances[i_USDCAddress] += _tokenAmount / 200;
                 }
@@ -228,15 +224,11 @@ contract PayLock is ERC2771Context, Ownable {
                     MAXIMUM_FEE_USD
                 ) {
                     newPayment.value =
-                        _tokenAmount.getConversionRate(i_priceFeedUSDT) -
+                        _tokenAmount -
                         MAXIMUM_FEE_USD.getMaxRate(i_priceFeedUSDT);
                     s_PaySafeTokenBalances[i_USDTAddress] += MAXIMUM_FEE_USD
                         .getMaxRate(i_priceFeedUSDT);
-                }
-                if (
-                    _tokenAmount.getConversionRate(i_priceFeedUSDT) <
-                    MAXIMUM_FEE_USD
-                ) {
+                } else {
                     newPayment.value = _tokenAmount - _tokenAmount / 200;
                     s_PaySafeTokenBalances[i_USDTAddress] += _tokenAmount / 200;
                 }
@@ -256,15 +248,11 @@ contract PayLock is ERC2771Context, Ownable {
                     MAXIMUM_FEE_USD
                 ) {
                     newPayment.value =
-                        _tokenAmount.getConversionRate(i_priceFeedDAI) -
+                        _tokenAmount -
                         MAXIMUM_FEE_USD.getMaxRate(i_priceFeedDAI);
                     s_PaySafeTokenBalances[i_DAIAddress] += MAXIMUM_FEE_USD
                         .getMaxRate(i_priceFeedDAI);
-                }
-                if (
-                    _tokenAmount.getConversionRate(i_priceFeedDAI) <
-                    MAXIMUM_FEE_USD
-                ) {
+                } else {
                     newPayment.value = _tokenAmount - _tokenAmount / 200;
                     s_PaySafeTokenBalances[i_DAIAddress] += _tokenAmount / 200;
                 }
@@ -284,15 +272,11 @@ contract PayLock is ERC2771Context, Ownable {
                     MAXIMUM_FEE_USD
                 ) {
                     newPayment.value =
-                        _tokenAmount.getConversionRate(i_priceFeedBTC) -
+                        _tokenAmount -
                         MAXIMUM_FEE_USD.getMaxRate(i_priceFeedBTC);
                     s_PaySafeTokenBalances[i_WBTCAddress] += MAXIMUM_FEE_USD
                         .getMaxRate(i_priceFeedBTC);
-                }
-                if (
-                    _tokenAmount.getConversionRate(i_priceFeedBTC) <
-                    MAXIMUM_FEE_USD
-                ) {
+                } else {
                     newPayment.value = _tokenAmount - _tokenAmount / 200;
                     s_PaySafeTokenBalances[i_WBTCAddress] += _tokenAmount / 200;
                 }
