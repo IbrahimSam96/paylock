@@ -1,16 +1,18 @@
-
-import debounce from 'lodash.debounce';
-import { useNetwork, useBalance, useAccount, useSignTypedData, useSignMessage, useSigner, useProvider, useContract, chain } from 'wagmi';
-import { ethers, providers } from 'ethers';
+// React.js and Next.js 
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import Image from 'next/image';
+import Head from 'next/head'
+
+// web3 libraries 
+import { useNetwork, useBalance, useAccount, useSigner, useProvider, useContract, chain } from 'wagmi';
+import { ethers } from 'ethers';
+// helpers 
+import debounce from 'lodash.debounce';
 import axios from 'axios'
+// Ui Libraries
 import { NumericFormat } from 'react-number-format';
 import Avatar, { genConfig } from 'react-nice-avatar'
-import { useRouter } from 'next/router'
-import Head from 'next/head'
 import { toast } from 'react-toastify';
-
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';

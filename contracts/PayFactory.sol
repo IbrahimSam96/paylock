@@ -20,35 +20,8 @@ error __InvalidCode();
 error __TransferFailed();
 error __TransferWithdrawn();
 
-// ETH Mainnet PriceFeed Contract Addresses
-//  ETH / USD 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419
-//  USDC / USD 	0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6
-//  USDT / USD 	0x3E7d1eAB13ad0104d2750B8863b489D65364e32D
-//  DAI / USD 	0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9
-//  BTC / USD 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c
-// Polygon Mainnet PriceFeed Contract Addresses
-//  MATIC / USD 0xAB594600376Ec9fD91F8e885dADF0CE036862dE0
-//  USDC / USD 	0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7
-//  USDT / USD 	0x0A6513e40db6EB1b165753AD52E80663aeA50545
-//  DAI / USD   0x4746DeC9e833A82EC7C2C1356372CcF2cfcD2F3D
-//  WBTC / USD 	0xDE31F8bFBD8c84b5360CFACCa3539B938dd78ae6
-// Polygon Mumbai PriceFeed Contract Addresses
-//  MATIC / USD 0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada
-//  USDC / USD 	0x572dDec9087154dC5dfBB1546Bb62713147e0Ab0
-//  USDT / USD 	0x92C09849638959196E976289418e5973CC96d645
-//  DAI / USD   0x0FCAa9c899EC5A91eBc3D5Dd869De833b06fB046
-//  BTC / USD 	0x007A22900a3B98143368Bd5906f8E17e9867581b
-
-// Polygon Mumbai token addrress
-// USDC 0xe11A86849d99F524cAC3E7A0Ec1241828e332C62
-// USDT 0xA02f6adc7926efeBBd59Fd43A84f4E0c0c91e832
-// DAI 0xd393b1E02dA9831Ff419e22eA105aAe4c47E1253
-// WBTC 0x0d787a4a1548f673ed375445535a6c7A1EE56180
-
-// Forawarder 0xd6b13d7f334d4a43d5b4223e6ef12d9b3280d8ee
-// 0x0000000000000000000000000000000000000000
 contract PayLock is ERC2771Context, Ownable {
-    // Library
+    // Libraries
     // ./PriceConverter gets token price conversions for detrmining max transaction fee
     using PriceConverter for uint256;
     // Immutables
@@ -67,9 +40,23 @@ contract PayLock is ERC2771Context, Ownable {
     // constants
     uint256 public constant MAXIMUM_FEE_USD = 50 * 1e18;
 
-    // Contructor - Passing in & setting immutables
-    // Chainlink's priceFeed Addresses
-    // Supported ERC20 token Addresses
+    /**
+     * @dev Constructor (Initializor).
+     * Chainlink's priceFeed Addresses
+     * Supported ERC20 token Addresses
+     * `_MinimalForwarder` Trusted Fowarder address `.
+     * `_AggregatorNative` Native token Chainlink aggregator address `.
+     * `_AggregatorUSDC` USDC Chainlink aggregator address `.
+     * `_AggregatorUSDT` USDT token Chainlink aggregator address `.
+     * `_AggregatorDAI` DAI token Chainlink aggregator address `.
+     * `_AggregatordBTC` WBTC token Chainlink aggregator address `.
+     *
+     * `_USDCAddress`  ERC20 token Address`.
+     * `_USDTAddress`  ERC20 token Address`.
+     * `_DAIAddress`  ERC20 token Address`.
+     * `_WBTCAddress`  ERC20 token Address`.
+     */
+
     constructor(
         MinimalForwarder forwarder,
         address AggregatorNative,
@@ -125,13 +112,14 @@ contract PayLock is ERC2771Context, Ownable {
     event PaymentWithdrawn(address indexed sender, payment indexed receipt);
 
     /**
-     * @dev Issue a payment.
+     * @dev CreatePayement Issues a payment.
      * `_receiver` Receiver address`.
      * `_code` A random 4 digit number`.
-     *
+     * _tokenAddress if native token value should be 0x0000.. if approved ERC20 address
+     * _tokenAmount Amount to transfer if native token 0.. or approved ERC20 address
      * Requirements:
-     * - `msg.value` Payment needs to have value i,e not empty.
-     *
+     * if sending a native token `msg.value` needs to have value i,e not empty.
+     * if sending a ERC20 token `_tokenAmount` needs to have value i,e not empty.
      * Emits a {PaymentIssued} event.
      */
     function CreatePayement(
@@ -299,12 +287,13 @@ contract PayLock is ERC2771Context, Ownable {
 
     /**
      * @dev Withdraw issued payment.
-     * `_index` Is a parameter supplied by the frontend to the issuer of transaction`.
+     *  _code 4 digit number entered by the user
+     * _receiverId Sent by the front-end automatically when correct code is entered by the user `.
      *
      * Requirements:
-     * - `Active` Payment needs to be active i.e Not withdrawn or Received.
-     * - `notReceiver` Only issuer address wil be able to withdraw.
-     *
+     * - `Active` Payment state needs to be active i.e Not withdrawn or Received.
+     * - `notReceiver` Only issuer address (_msgSender) will be able to withdraw.
+     * - _code must match same number used to issue payment
      * Emits a {PaymentWithdrawn} event.
      */
 
@@ -392,12 +381,13 @@ contract PayLock is ERC2771Context, Ownable {
 
     /**
      * @dev Redeem _code to receive Payment.
-     * `_code` A random 4 digit number `.
+     * `_code` 4 digit number entered by the user `.
+     * _receiverId Sent by the front-end automatically when correct code is entered by the user `.
      *
      * Requirements:
      * - `Active` Payment needs to be active i.e Not withdrawn or Received.
      * - `notReceiver` sender must be recepient address in payment.
-     *
+     * - _code must match same number used to issue payment
      * Emits a {PaymentReedemed} event.
      */
     function RedeemPayment(uint256 _code, uint256 _receiverId) public payable {
@@ -490,7 +480,7 @@ contract PayLock is ERC2771Context, Ownable {
         }
     }
 
-    // Withdraw native protocol fees
+    // onlyOwner function - Withdraws native protocol fees
     function withdrawPaySafeBalance() public payable onlyOwner {
         (bool success, ) = msg.sender.call{value: s_PaySafe}("");
         if (!success) {
@@ -499,7 +489,7 @@ contract PayLock is ERC2771Context, Ownable {
         s_PaySafe = 0;
     }
 
-    // Withdraw erc20 protocol fees
+    // onlyOwner function -  Withdraws ERC20 protocol fees
     function withdrawPaySafeBalance(address _tokenAddress)
         public
         payable

@@ -1,24 +1,27 @@
-import debounce from 'lodash.debounce';
-import {
-    ConnectButton
-} from '@rainbow-me/rainbowkit';
-import { useConnect, useNetwork, useBalance, useAccount, useSignTypedData, useSignMessage, useSigner, useProvider, useContract, chain } from 'wagmi';
-import { ethers } from 'ethers';
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+// React & Next.js 
+import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import Head from 'next/head'
+// web3 imports
+import { useNetwork, useAccount, useSigner } from 'wagmi';
+import { ethers } from 'ethers';
+// helper libraries
+import debounce from 'lodash.debounce';
 import axios from 'axios'
+// Ui Libraries 
 import { NumericFormat } from 'react-number-format';
 import Avatar, { genConfig } from 'react-nice-avatar'
-import { useRouter } from 'next/router'
-import Head from 'next/head'
 import { toast } from 'react-toastify';
+// Components 
+import Navigation from './components/Navigation';
+
 
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-// Contract and Forwarder Addresses 
+// Contract and Trusted Forwarder Addresses 
 import PaylockAddressPolygon from '../polygon.json';
 import PaylockAddressMumbai from '../mumbai.json';
 import PaylockAddressEth from '../eth.json'
@@ -30,7 +33,6 @@ import MinimalForwarderEth from '../eth.json'
 import MinimalForwarderGoerli from "../goerli.json"
 
 import PayFactory from '../artifacts/contracts/PayFactory.sol/PayLock.json'
-import Navigation from './components/Navigation';
 
 const Code = () => {
     // useRefs
