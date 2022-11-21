@@ -4,39 +4,27 @@
 
 # Paylock
 
-Send and receive withdrawable ERC20 tokens payments via code securely.  
+Send and receive withdrawable ERC20 tokens via 4-digit code.  
 
+## Contract Addresses
+Mumbai:
+[MinimalForwarder](https://polygonscan.com/address/0x219aaE373B3033Fb67686360258F729300eC5696), 
+[PaylockAddress](https://polygonscan.com/address/0xB7eE72448D43844560976cEB6701FB9ebeB6626e)
+
+Goerli: 
+[MinimalForwarder](https://goerli.etherscan.io/address/0x5F46AeB8f5611E110175838Ad164b872c6Dae958),
+[PaylockAddress](https://goerli.etherscan.io/address/0x86Fa62B55d88a2b0ACADE19A660C778931974f87)
 
 ## Features
-- Gasless transaction withdrawals 
-- 0.5% fee (per transaction) capped at $50USD 
+- Withdraw or Redeem payments without paying gas.
+- 0.5% fee (per transaction) capped at $50USD. 
 - Send payment code via SMS
 - Light/dark mode toggle
-
-## Run Locally
-
-Clone the project
-
-```bash
-  git clone https://link-to-project
-```
-Install dependencies
-
-```bash
-  npm install
-```
-Add ENVIROMENT VARIABLES (README-ENV)
-
-Start the server
-
-```bash
-  npm run dev
-```
 
 
 ## Tech Stack
 
-**Client:** Next.js, TailwindCSS
+**Client:** Next.js, React, TailwindCSS
 
-**Solidity:** Hardhat, ethers.js
+**Solidity:** Hardhat, ethers.js, OpenZeppelin Defender, Chainlink Price Feeds
 
