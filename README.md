@@ -1,5 +1,5 @@
 
-<img src="https://github.com/IbrahimSam96/paylock/blob/main/public/daaps.svg" width="300">
+<img src="https://github.com/IbrahimSam96/paylock/blob/main/public/daaps.svg" width="200">
 
 
 # Paylock
