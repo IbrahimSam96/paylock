@@ -395,6 +395,7 @@ const Index = () => {
     }
   }
 
+  console.log(connection.chain?.name)
   return (
 
     <div className={` h-full min-h-screen w-full grid grid-cols-[repeat(7,1fr)] grid-rows-[100px,25px,auto,100px] bg-[#131341]`}>
@@ -481,7 +482,7 @@ const Index = () => {
             <span className={`text-[#20cc9e] text-xs sm:text-sm self-center `}>Select token  </span>
 
             <span className={`flex ml-4  `}>
-              {!isDisconnected && token &&
+              {!isDisconnected && token && connection.chain?.name == 'Chain 5' || connection.chain?.name == 'Chain 80001' &&
                 <>
                   <span className={`text-[#20cc9e] text-xs sm:text-sm self-center `}>Balance:  </span>
                   {token && token?.value == connection.chain?.nativeCurrency.symbol &&
@@ -525,7 +526,7 @@ const Index = () => {
             </span>
           </span>
           <span className={`flex m-2 justify-self-end  `} >
-            {!isDisconnected && token &&
+            {!isDisconnected && token && connection.chain?.name == 'Chain 5' || connection.chain?.name == 'Chain 80001' &&
               <>
                 {token.value == connection.chain?.nativeCurrency.symbol &&
                   <>
@@ -861,6 +862,7 @@ const Index = () => {
             </AccordionDetails>
           </Accordion>
 
+
           {isDisconnected &&
             <span className={`mt-2 justify-self-center self-center`}>
               <ConnectButton />
@@ -879,14 +881,14 @@ const Index = () => {
             < button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled >Enter Amount</button>
           }
 
-          {isConnected && addressReciever != '' && token && token.value != connection.chain?.nativeCurrency.symbol && Number(sendAmount.value) > Number(tokenBalance.data?.formatted) &&
+          {isConnected && addressReciever != '' && connection.chain?.name == 'Chain 5' || connection.chain?.name == 'Chain 80001' && token && token.value != connection.chain?.nativeCurrency.symbol && Number(sendAmount.value) > Number(tokenBalance.data?.formatted) &&
             < button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled >{`Insufficient ${token.value}`} </button>
           }
-          {isConnected && addressReciever != '' && token && token.value == connection.chain?.nativeCurrency.symbol && Number(sendAmount.value) > Number(nativeBalance.data.formatted) &&
+          {isConnected && addressReciever != '' && connection.chain?.name == 'Chain 5' || connection.chain?.name == 'Chain 80001' && token && token.value == connection.chain?.nativeCurrency.symbol && Number(sendAmount.value) > Number(nativeBalance.data.formatted) &&
             < button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled > {`Insufficient ${token.value}`}</button>
           }
 
-          {isConnected && addressReciever != '' && token && token.value == connection.chain?.nativeCurrency.symbol && Number(nativeBalance.data?.value) != 0 &&
+          {isConnected && addressReciever != '' && connection.chain?.name == 'Chain 5' || connection.chain?.name == 'Chain 80001' && token && token.value == connection.chain?.nativeCurrency.symbol && Number(nativeBalance.data?.value) != 0 &&
             sendAmount.floatValue != undefined && sendAmount.floatValue != 0 && Number(sendAmount.value) <= Number(nativeBalance.data.formatted) &&
             <button
               disabled={transactionLoading}
@@ -911,7 +913,7 @@ const Index = () => {
             </button>
           }
 
-          {isConnected && addressReciever != '' && token && token.value != connection.chain?.nativeCurrency.symbol && Number(tokenBalance.data?.value) != 0 &&
+          {isConnected && addressReciever != '' && connection.chain?.name == 'Chain 5' || connection.chain?.name == 'Chain 80001' && token && token.value != connection.chain?.nativeCurrency.symbol && Number(tokenBalance.data?.value) != 0 &&
             sendAmount.floatValue != undefined && sendAmount.floatValue != 0 && Number(sendAmount.value) <= Number(tokenBalance.data?.formatted) &&
             <button disabled={transactionLoading}
               onClick={() => {
