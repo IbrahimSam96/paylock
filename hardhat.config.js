@@ -22,7 +22,10 @@ module.exports = {
         },
     },
     etherscan: {
-        apiKey: process.env.NEXT_PUBLIC_POLYGONSCAN_API_KEY,
+        apiKey: {
+            polygonMumbai: process.env.NEXT_PUBLIC_POLYGONSCAN_API_KEY,
+            goerli: process.env.NEXT_PUBLIC_GOERLI_API_KEY,
+        }
     },
     solidity: {
         version: "0.8.9",
