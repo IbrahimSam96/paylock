@@ -881,14 +881,14 @@ const Index = () => {
             < button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled >Enter Amount</button>
           }
 
-          {isConnected && addressReciever != '' && connection.chain?.name == 'Chain 5' || connection.chain?.name == 'Chain 80001' && token && token.value != connection.chain?.nativeCurrency.symbol && Number(sendAmount.value) > Number(tokenBalance.data?.formatted) &&
+          {isConnected && addressReciever != '' && (connection.chain?.name == 'Goerli' || connection.chain?.name == 'Polygon Mumbai') && token && token.value != connection.chain?.nativeCurrency.symbol && Number(sendAmount.value) > Number(tokenBalance.data?.formatted) &&
             < button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled >{`Insufficient ${token.value}`} </button>
           }
-          {isConnected && addressReciever != '' && connection.chain?.name == 'Chain 5' || connection.chain?.name == 'Chain 80001' && token && token.value == connection.chain?.nativeCurrency.symbol && Number(sendAmount.value) > Number(nativeBalance.data.formatted) &&
+          {isConnected && addressReciever != '' && (connection.chain?.name == 'Goerli' || connection.chain?.name == 'Polygon Mumbai') && token && token.value == connection.chain?.nativeCurrency.symbol && Number(sendAmount.value) > Number(nativeBalance.data.formatted) &&
             < button className={`p-2 self-center bg-[#1e1d45] text-[#c24bbe] text-sm opacity-60`} disabled > {`Insufficient ${token.value}`}</button>
           }
 
-          {isConnected && addressReciever != '' && connection.chain?.name == 'Chain 5' || connection.chain?.name == 'Chain 80001' && token && token.value == connection.chain?.nativeCurrency.symbol && Number(nativeBalance.data?.value) != 0 &&
+          {isConnected && addressReciever != '' && (connection.chain?.name == 'Goerli' || connection.chain?.name == 'Polygon Mumbai') && token && token.value == connection.chain?.nativeCurrency.symbol && Number(nativeBalance.data?.value) != 0 &&
             sendAmount.floatValue != undefined && sendAmount.floatValue != 0 && Number(sendAmount.value) <= Number(nativeBalance.data.formatted) &&
             <button
               disabled={transactionLoading}
@@ -913,7 +913,7 @@ const Index = () => {
             </button>
           }
 
-          {isConnected && addressReciever != '' && connection.chain?.name == 'Chain 5' || connection.chain?.name == 'Chain 80001' && token && token.value != connection.chain?.nativeCurrency.symbol && Number(tokenBalance.data?.value) != 0 &&
+          {isConnected && addressReciever != '' && connection.chain?.name == ('Goerli' || 'Polygon Mumbai') && token && token.value != connection.chain?.nativeCurrency.symbol && Number(tokenBalance.data?.value) != 0 &&
             sendAmount.floatValue != undefined && sendAmount.floatValue != 0 && Number(sendAmount.value) <= Number(tokenBalance.data?.formatted) &&
             <button disabled={transactionLoading}
               onClick={() => {
