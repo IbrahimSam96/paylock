@@ -428,7 +428,7 @@ const Index = () => {
                   alt={'error'}
                   src={'/alert_diamond.svg'}
                 />
-                <span className={`text-[#c24bbe] text-sm self-center ml-2 font-semibold`}>Please insert a valid address.</span>
+                <span className={`text-[#c24bbe] text-sm self-center ml-2 font-semibold my-2`}>Please insert a valid address.</span>
               </>
             }
           </span>
@@ -526,7 +526,7 @@ const Index = () => {
             </span>
           </span>
           <span className={`flex m-2 justify-self-end  `} >
-            {!isDisconnected && token && connection.chain?.name == 'Chain 5' || connection.chain?.name == 'Chain 80001' &&
+            {!isDisconnected && token && (connection.chain?.name == 'Goerli' || connection.chain?.name == 'Polygon Mumbai') &&
               <>
                 {token.value == connection.chain?.nativeCurrency.symbol &&
                   <>
