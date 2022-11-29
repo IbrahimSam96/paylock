@@ -30,9 +30,12 @@ const Navigation = ({ }) => {
     const [goerliRedeemablePayments, setGoerliRedeemablePayments] = React.useState([]);
 
     const [txCount, settxCount] = useState(0);
+    const [txCountMumbai, settxCountMumbai] = useState(0);
+
     // Ensure TxCount is reset
     useEffect(() => {
         settxCount(0)
+        settxCountMumbai(0)
     }, [connection.chain])
 
     useEffect(() => {
@@ -72,8 +75,11 @@ const Navigation = ({ }) => {
                             count++
                         }
                     })
-                    settxCount((prevCount) => prevCount + count)
-
+                    // settxCount((prevCount) => {
+                    //     console.log("Mumbai PrevTx's:", prevCount)
+                    //     prevCount + count
+                    // })
+                    settxCountMumbai(count)
                 }
             }
             getMumbaiRedeemablePayments();
@@ -108,8 +114,11 @@ const Navigation = ({ }) => {
                             count++
                         }
                     })
-                    settxCount((prevCount) => prevCount + count)
-
+                    // settxCount((prevCount) => {
+                    //     console.log("Goerli PrevTx's:", prevCount)
+                    //     prevCount + count
+                    // })
+                    settxCount(count)
                 }
                 setGoerliRedeemablePayments(data);
             }
@@ -210,7 +219,7 @@ const Navigation = ({ }) => {
                         Receive
                     </p>
                     <p className={`${txCount !== 0 && `bg-[#F22F46] rounded-full border-gray-50 border-[1px]`} px-3 ml-2 my-2 font-bold text-white  `}>
-                        {isConnected && txCount !== 0 && txCount}
+                        {isConnected && txCount !== 0 && txCount + txCountMumbai}
                     </p>
 
                 </span>
