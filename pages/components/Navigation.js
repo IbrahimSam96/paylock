@@ -70,10 +70,10 @@ const Navigation = ({ }) => {
                     data.map((tx) => {
                         if (tx.state == 0) {
                             count++
-                            settxCount((prevCount) => prevCount + 1)
-
                         }
                     })
+                    settxCount((prevCount) => prevCount + count)
+
                 }
             }
             getMumbaiRedeemablePayments();
@@ -106,9 +106,10 @@ const Navigation = ({ }) => {
                     data.map((tx) => {
                         if (tx.state == 0) {
                             count++
-                            settxCount((prevCount) => prevCount + 1)
                         }
                     })
+                    settxCount((prevCount) => prevCount + count)
+
                 }
                 setGoerliRedeemablePayments(data);
             }
