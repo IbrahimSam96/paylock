@@ -482,7 +482,7 @@ const Index = () => {
             <span className={`text-[#20cc9e] text-xs sm:text-sm self-center `}>Select token  </span>
 
             <span className={`flex ml-4  `}>
-              {!isDisconnected && token && connection.chain?.name == 'Chain 5' || connection.chain?.name == 'Chain 80001' &&
+              {!isDisconnected && token && (connection.chain?.name == 'Goerli' || connection.chain?.name == 'Polygon Mumbai') &&
                 <>
                   <span className={`text-[#20cc9e] text-xs sm:text-sm self-center `}>Balance:  </span>
                   {token && token?.value == connection.chain?.nativeCurrency.symbol &&

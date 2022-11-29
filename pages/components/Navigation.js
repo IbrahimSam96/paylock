@@ -70,7 +70,8 @@ const Navigation = ({ }) => {
                     data.map((tx) => {
                         if (tx.state == 0) {
                             count++
-                            settxCount(count)
+                            settxCount((prevCount) => prevCount + 1)
+
                         }
                     })
                 }
@@ -105,7 +106,7 @@ const Navigation = ({ }) => {
                     data.map((tx) => {
                         if (tx.state == 0) {
                             count++
-                            settxCount(count)
+                            settxCount((prevCount) => prevCount + 1)
                         }
                     })
                 }
