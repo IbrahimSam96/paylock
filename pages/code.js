@@ -387,7 +387,7 @@ const Code = () => {
             <Head>
                 <title>Paylock</title>
                 <meta name="Send crypto like web2" content="Send crpto " />
-                <link rel="icon" href="/favicon.ico" />
+                <link rel="icon" href="/daaps.svg" />
             </Head>
 
             <Navigation />
