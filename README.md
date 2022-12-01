@@ -17,7 +17,7 @@ Goerli:
 
 ## Features
 - Withdraw or Redeem payments without paying gas.
-- 0.5% fee (per transaction) capped at $50USD. 
+- 0.5% fee (per transaction) capped at $50USD (determined on chain using Chainlink Price Feed Oracles). 
 - Send payment code via SMS
 - Light/dark mode toggle
 
@@ -27,4 +27,15 @@ Goerli:
 **Client:** Next.js, React, TailwindCSS
 
 **Solidity:** Hardhat, ethers.js, OpenZeppelin Defender, Chainlink Price Feeds
+
+<img src="https://github.com/IbrahimSam96/paylock/blob/main/public/Dev-Preview.png" width="700">
+
+<img src="https://github.com/IbrahimSam96/paylock/blob/main/public/Send Payments.PNG" width="700">
+
+<img src="https://github.com/IbrahimSam96/paylock/blob/main/public/Issued payments.PNG" width="700">
+
+<img src="https://github.com/IbrahimSam96/paylock/blob/main/public/Redeemable Payments.PNG" width="700">
+
+<img src="https://github.com/IbrahimSam96/paylock/blob/main/public/Text-Message.jpg_small" width="700">
+
 
