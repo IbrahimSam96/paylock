@@ -36,6 +36,6 @@ Goerli:
 
 <img src="https://github.com/IbrahimSam96/paylock/blob/main/public/Redeemable Payments.PNG" width="700">
 
-<img src="https://github.com/IbrahimSam96/paylock/blob/main/public/Text-Message.jpg_small" width="700">
+<img src="https://github.com/IbrahimSam96/paylock/blob/main/public/Text-Message.jpg" width="700">
 
 
