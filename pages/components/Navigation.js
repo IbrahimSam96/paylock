@@ -160,9 +160,9 @@ const Navigation = ({ }) => {
                 />
                 <ToastContainer theme={theme} />
                 <span className="group ml-auto my-auto text-sm mt-5 ">
-                    <p className='cursor-pointer font-extralight group-hover:text-[#149adc] text-[white] text-sm' >Send
+                    <p className='cursor-pointer font-bold group-hover:text-[#149adc] text-[#149adc] dark:text-[white] text-sm' >Send
                         <svg className={`inline`} width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path className={`group-hover:fill-[#149adc]`} d="M12 15L12.3536 15.3536L12 15.7071L11.6464 15.3536L12 15ZM18.3536 9.35355L12.3536 15.3536L11.6464 14.6464L17.6464 8.64645L18.3536 9.35355ZM11.6464 15.3536L5.64645 9.35355L6.35355 8.64645L12.3536 14.6464L11.6464 15.3536Z" fill="white" />
+                            <path className={`group-hover:fill-[#149adc] dark:fill-[white] fill-[#149adc]`} d="M12 15L12.3536 15.3536L12 15.7071L11.6464 15.3536L12 15ZM18.3536 9.35355L12.3536 15.3536L11.6464 14.6464L17.6464 8.64645L18.3536 9.35355ZM11.6464 15.3536L5.64645 9.35355L6.35355 8.64645L12.3536 14.6464L11.6464 15.3536Z" fill="white" />
                         </svg>
                     </p>
                     <span className={`hidden z-50 group-hover:block p-4  bg-[aliceblue] dark:bg-[#100d23] absolute rounded-xl border-t-2 border-[#149adc] `}>
@@ -213,17 +213,16 @@ const Navigation = ({ }) => {
                 <span onClick={() => {
                     router.push('/code')
                 }}
-                    className="flex mr-auto mt-[10px] ml-4 text-sm cursor-pointer ">
-                    <p className='m-auto font-extralight hover:text-[#149adc] text-[white] text-sm'
+                    className="flex mr-auto mt-[15px] ml-4 text-sm cursor-pointer ">
+                    <p className='m-auto font-bold hover:text-[#149adc] text-[#149adc] dark:text-[white] text-sm'
                     >
                         Receive
                     </p>
-                    <p className={`${txCount !== 0 && `bg-[#F22F46] rounded-full border-gray-50 border-[1px]`} px-3 ml-2 my-2 font-bold text-white  `}>
+                    <p className={`${txCount !== 0 && `bg-[#F22F46] rounded-full border-gray-50 border-[1px]`} px-3 ml-2 my-2 font-bold inline text-white  `}>
                         {isConnected && txCount !== 0 && txCount + txCountMumbai}
                     </p>
 
                 </span>
-
             </span>
 
             <span className={` flex self-center justify-self-end`}>

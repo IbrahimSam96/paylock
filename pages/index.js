@@ -395,10 +395,9 @@ const Index = () => {
     }
   }
 
-  console.log(connection.chain?.name)
   return (
 
-    <div className={` h-full min-h-screen w-full grid grid-cols-[repeat(7,1fr)] grid-rows-[100px,25px,auto,100px] bg-[#131341]`}>
+    <div className={` h-full min-h-screen w-full grid grid-cols-[repeat(7,1fr)] grid-rows-[100px,25px,auto,100px] bg-[lightgrey] dark:bg-[#131341]`}>
       <Head>
         <title>Paylock</title>
         <meta name="Send crypto like web2" content="Send crpto " />
@@ -411,11 +410,10 @@ const Index = () => {
         <span className={`self-start justify-self-auto sm:justify-self-center 
            col-start-1 col-end-8 row-start-3 row-end-4 sm:mx-4 p-4 mx-4
            grid grid-rows-[40px,min-content,30px,30px,40px,30px,auto,30px,min-content,70px] grid-cols-1
-            border-black border-[2px] bg-[aliceblue] dark:bg-[#100d23] rounded-2xl  `}>
+           shadow-xl bg-[azure] dark:bg-[#100d23] rounded-2xl ${transactionLoading && `opacity-50`} `}>
 
           <span className={`grid grid-col-1 grid-rows-1 p-3`} >
-
-            <span className={`text-[#149adc] font-bold text-base justify-self-start align-super`}>Send  </span>
+            <span className={`text-[#149adc] font-bold text-base justify-self-start align-super`}>Send </span>
           </span>
 
           <span className={`flex ml-2 `}>
@@ -436,8 +434,8 @@ const Index = () => {
           <input
             name="text"
             type="text"
-            disabled={isDisconnected}
-            className={`self-end py-2 focus:outline-none font-bold text-xs rounded`}
+            disabled={isDisconnected || transactionLoading}
+            className={`self-end py-2 focus:outline-none font-bold text-xs rounded border-[1px] border-[lightgrey] dark:border-[#20cc9e]`}
             onChange={(change) => {
               const isAddress = ethers.utils.isAddress(change.target.value);
               if (!isAddress) {
@@ -458,7 +456,7 @@ const Index = () => {
           <Select
             options={tokenOptions}
             value={token}
-            isDisabled={isDisconnected}
+            isDisabled={isDisconnected || transactionLoading}
             className={`self-center ${isDisconnected && `opacity-50`}`}
             onChange={(change) => {
               setToken(change);
@@ -488,7 +486,7 @@ const Index = () => {
                   {token && token?.value == connection.chain?.nativeCurrency.symbol &&
                     <>
                       {nativeBalance.data ?
-                        <span className={`text-[#149adc] text-xs sm:text-sm self-center ml-2 `}>
+                        <span className={`text-[#149adc] font-bold text-xs sm:text-sm self-center ml-2 `}>
                           {Number(nativeBalance.data?.formatted).toPrecision(5)}  {token.value}
                         </span>
                         :
@@ -507,7 +505,7 @@ const Index = () => {
                   {token && token?.value != connection.chain?.nativeCurrency.symbol &&
                     <>
                       {tokenBalance.data ?
-                        <span className={`text-[#149adc] text-text-xs sm:text-sm self-center ml-2 `}>
+                        <span className={`text-[#149adc] font-bold text-text-xs sm:text-sm self-center ml-2 `}>
                           {Number(tokenBalance.data?.formatted).toPrecision(5)} {token.value}
                         </span>
                         :
@@ -697,8 +695,8 @@ const Index = () => {
             }
           </span>
           <NumericFormat
-            disabled={isDisconnected || !token}
-            className={`focus:outline-none font-bold text-xs rounded `}
+            disabled={isDisconnected || !token || transactionLoading}
+            className={`focus:outline-none font-bold text-xs rounded border-[1px] border-[lightgrey] dark:border-[#20cc9e] `}
             allowNegative={false}
             value={sendAmount.value}
             thousandSeparator
@@ -755,7 +753,7 @@ const Index = () => {
                       name="name"
                       type="text"
                       className={`ml-2 self-center justify-self-start text-[#c24bbe] `}
-                      value={addressReciever.substring(0, 4) + "..." + addressReciever.substring(38, 42)}
+                      value={addressReciever.substring(0, 6) + "..." + addressReciever.substring(38, 42)}
                       disabled={true}
                     />
                   </span>
@@ -767,7 +765,7 @@ const Index = () => {
                   </span>
 
                   <div className={`group self-center`}>
-                    <span className={`bg-[#100d23] text-[#20cc9e] text-sm p-3 rounded hidden group-hover:block absolute text-center py-2 px-8 -mt-8 ml-3 z-50`}>( 0.5% of transaction value - Capped at $50USD ) </span>
+                    <span className={` bg-[azure] dark:bg-[#100d23] text-[#20cc9e] font-bold text-sm p-3 rounded hidden group-hover:block absolute text-center py-2 px-4 -mt-8 ml-3 z-50`}>( 0.5% of transaction value - Capped at $50USD ) </span>
 
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <circle cx="12" cy="12" r="9" fill="#7E869E" fillOpacity="0.25" stroke="white" strokeWidth="1.2" />
@@ -800,7 +798,7 @@ const Index = () => {
                   <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center block m-2`}>
                     Network:
                   </span>
-                  <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2`}>
+                  <span className={`font-bold text-xs text-[#c24bbe] self-center block m-2`}>
                     {connection.chain?.name}
                   </span>
                 </span>
@@ -808,13 +806,15 @@ const Index = () => {
                   <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center block m-2`}>
                     Method:
                   </span>
-                  <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2`}>
+                  <span className={`font-bold text-xs text-[#c24bbe] self-center block m-2`}>
                     Single Payment (Withdrawable)
                   </span>
                 </span>
 
-                <span className={`mt-2 flex border-t-[1px] dark:border-[#20cc9e] border-[#372963]`}>
+                <span className={`mt-2 flex border-t-[1px] dark:border-[#20cc9e] border-[#372963] `}>
                   <input
+                    className={`cursor-pointer`}
+                    disabled={transactionLoading}
                     type="checkbox"
                     onChange={(value) => {
                       console.log(value.target.checked)
@@ -822,7 +822,7 @@ const Index = () => {
                     }}
                   />
 
-                  <span className={`font-bold text-xs dark:text-[#20cc9e] text-[#372963] self-center block m-2`}>
+                  <span className={`font-bold text-xs text-[#20cc9e] self-center block m-2`}>
                     Notify Recepient via Text Message
                   </span>
                   <span className={`font-extralight text-xs text-[#c24bbe] self-center block m-2`}>
@@ -894,12 +894,12 @@ const Index = () => {
               disabled={transactionLoading}
               onClick={() => {
                 createtx();
-              }} className={`p-2 max-h-[32px] self-center bg-[#1e1d45] text-[#c24bbe] text-sm `}>
+              }} className={`p-2 max-h-[32px] self-center bg-[#1e1d45] text-[#c24bbe] text-sm font-bold `}>
 
               <span className={`inline-flex self-center `}>
                 {transactionLoading &&
                   <Image
-                    className={`animate-spin`}
+                    className={`animate-spin font-bold`}
                     src={'/loading.svg'}
                     width={20}
                     height={20}
@@ -918,13 +918,13 @@ const Index = () => {
             <button disabled={transactionLoading}
               onClick={() => {
                 createtx();
-              }} className={`p-2 max-h-[32px] self-center bg-[#1e1d45] text-[#c24bbe] text-sm `}>
+              }} className={`p-2 max-h-[32px] self-center bg-[#1e1d45] text-[#c24bbe] text-sm font-bold`}>
               {tokenAllowance ?
 
                 <span className={`inline-flex self-center `}>
                   {transactionLoading &&
                     <Image
-                      className={`animate-spin`}
+                      className={`animate-spin font-bold`}
                       src={'/loading.svg'}
                       width={20}
                       height={20}
@@ -945,7 +945,7 @@ const Index = () => {
                       height={20}
                     />
                   }
-                  <span className={`flex self-center ml-2`} >
+                  <span className={`flex self-center ml-2 font-bold`} >
                     Create Payment
                   </span>
                 </span>
