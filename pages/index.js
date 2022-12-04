@@ -397,7 +397,7 @@ const Index = () => {
 
   return (
 
-    <div className={` h-full min-h-screen w-full grid grid-cols-[repeat(7,1fr)] grid-rows-[100px,25px,auto,100px] bg-[lightgrey] dark:bg-[#131341]`}>
+    <div className={` h-full min-h-screen w-full grid grid-cols-[repeat(7,1fr)] grid-rows-[100px,25px,auto,100px] bg-[aliceblue] dark:bg-[#131341]`}>
       <Head>
         <title>Paylock</title>
         <meta name="Send crypto like web2" content="Send crpto " />
