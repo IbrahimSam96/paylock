@@ -6,13 +6,10 @@
 Send and receive withdrawable ERC20 tokens via 4-digit code.  
 
 ## Contract Addresses
-Mumbai:
-[MinimalForwarder](https://polygonscan.com/address/0x219aaE373B3033Fb67686360258F729300eC5696), 
-[PaylockAddress](https://polygonscan.com/address/0xB7eE72448D43844560976cEB6701FB9ebeB6626e)
+Polygon - Mumbai : [Paylock Contract Address](https://polygonscan.com/address/0xB7eE72448D43844560976cEB6701FB9ebeB6626e)
 
-Goerli: 
-[MinimalForwarder](https://goerli.etherscan.io/address/0x5F46AeB8f5611E110175838Ad164b872c6Dae958),
-[PaylockAddress](https://goerli.etherscan.io/address/0x86Fa62B55d88a2b0ACADE19A660C778931974f87)
+
+Ethereum - Goerli : [Paylock Contract Address](https://goerli.etherscan.io/address/0x86Fa62B55d88a2b0ACADE19A660C778931974f87)
 
 ## Features
 - Withdraw or Redeem payments without paying gas.
